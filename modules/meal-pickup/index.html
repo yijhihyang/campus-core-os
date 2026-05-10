@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>智慧取餐系統</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -32,74 +31,35 @@
     --amber-border: #F0D898;
   }
 
-  html, body {
-    height: 100%;
-    font-family: 'Noto Sans TC', sans-serif;
-    background: var(--bg);
-    overflow: hidden;
-  }
+  html, body { height: 100%; font-family: 'Noto Sans TC', sans-serif; background: var(--bg); overflow: hidden; }
 
-  /* ── 隱藏 input（捕捉 HID 輸入） ── */
-  #card-input {
-    position: fixed;
-    opacity: 0;
-    pointer-events: none;
-    width: 1px; height: 1px;
-    top: -100px;
-  }
+  #card-input { position: fixed; opacity: 0; pointer-events: none; width: 1px; height: 1px; top: -100px; }
 
-  /* ── 主容器 ── */
-  .app {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  .app { height: 100vh; display: flex; flex-direction: column; }
 
-  /* ── Header ── */
+  /* Header */
   .header {
-    background: var(--text-1);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
+    background: var(--text-1); padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
   }
-  .header-left { display: flex; flex-direction: column; gap: 2px; }
   .header-title { color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 0.08em; }
-  .header-date  { color: rgba(255,255,255,0.45); font-size: 12px; }
-  .header-right { text-align: right; }
-  .stats-label  { color: rgba(255,255,255,0.45); font-size: 11px; }
-  .stats-count  { color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; }
+  .header-date  { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 2px; }
+  .stats-label  { color: rgba(255,255,255,0.45); font-size: 11px; text-align: right; }
+  .stats-count  { color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; text-align: right; }
 
-  /* ── 主內容 ── */
-  .main {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    overflow: hidden;
-  }
+  /* Main */
+  .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
 
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 440px;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    overflow: hidden;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; width: 100%; max-width: 440px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.06); overflow: hidden;
   }
 
-  /* ── 狀態：待機 ── */
-  #state-idle { display: flex; flex-direction: column; }
-  .idle-body {
-    padding: 48px 32px 40px;
-    text-align: center;
-  }
+  /* 待機 */
+  .idle-body { padding: 48px 32px 40px; text-align: center; }
   .pulse-ring {
-    width: 80px; height: 80px;
-    border-radius: 50%;
+    width: 80px; height: 80px; border-radius: 50%;
     border: 2px solid var(--border-dark);
     margin: 0 auto 24px;
     display: flex; align-items: center; justify-content: center;
@@ -109,62 +69,45 @@
     0%,100% { box-shadow: 0 0 0 0 rgba(28,27,24,0.08); }
     50%      { box-shadow: 0 0 0 14px rgba(28,27,24,0); }
   }
-  .idle-title { font-size: 24px; font-weight: 900; color: var(--text-1); margin-bottom: 8px; letter-spacing: -0.01em; }
+  .idle-title { font-size: 24px; font-weight: 900; color: var(--text-1); margin-bottom: 8px; }
   .idle-sub   { font-size: 14px; color: var(--text-3); }
   .idle-footer {
-    border-top: 1px solid var(--border);
-    padding: 14px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: var(--text-3);
+    border-top: 1px solid var(--border); padding: 14px 24px;
+    display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3);
   }
   .idle-footer strong { color: var(--text-2); font-weight: 500; }
 
-  /* ── 狀態：刷卡成功 ── */
-  #state-found { display: none; flex-direction: column; }
+  /* 刷卡成功 */
   .found-header {
-    padding: 20px 24px 16px;
-    background: var(--blue-bg);
+    padding: 20px 24px 16px; background: var(--blue-bg);
     border-bottom: 1px solid var(--blue-border);
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: flex; align-items: center; gap: 14px;
   }
   .avatar {
     width: 52px; height: 52px; border-radius: 50%;
     background: var(--blue);
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 700; color: #fff;
-    flex-shrink: 0;
+    font-size: 20px; font-weight: 700; color: #fff; flex-shrink: 0;
   }
   .student-name  { font-size: 20px; font-weight: 700; color: var(--text-1); }
   .student-class { font-size: 13px; color: var(--blue); margin-top: 3px; }
   .badge {
     margin-left: auto; flex-shrink: 0;
     padding: 4px 12px; border-radius: 20px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    font-size: 11px; font-weight: 700;
     background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border);
   }
-
   .meals-section { padding: 20px 24px; }
-  .meals-label   { font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
-
+  .meals-label { font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
   .meal-btn {
-    width: 100%; padding: 14px 16px;
-    border-radius: 10px;
-    border: 1.5px solid var(--border);
-    background: var(--bg);
-    cursor: pointer;
-    text-align: left;
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    cursor: pointer; text-align: left;
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 8px;
-    transition: all 0.12s;
+    margin-bottom: 8px; transition: all 0.12s;
     font-family: 'Noto Sans TC', sans-serif;
   }
-  .meal-btn:hover   { border-color: var(--blue); background: var(--blue-bg); }
-  .meal-btn.selected { border-color: var(--blue); background: var(--blue-bg); }
+  .meal-btn:hover, .meal-btn.selected { border-color: var(--blue); background: var(--blue-bg); }
   .meal-name  { font-size: 15px; font-weight: 500; color: var(--text-1); }
   .meal-btn.selected .meal-name { color: var(--blue); }
   .meal-price {
@@ -173,14 +116,10 @@
     padding: 3px 10px; border-radius: 6px; flex-shrink: 0;
   }
   .meal-btn.selected .meal-price { color: var(--blue); border-color: var(--blue-border); }
-
   .selected-bar {
-    display: none;
-    margin: 4px 0 12px;
-    padding: 10px 14px;
-    background: var(--amber-bg);
-    border: 1px solid var(--amber-border);
-    border-radius: 8px;
+    display: none; margin: 4px 0 12px;
+    padding: 10px 14px; background: var(--amber-bg);
+    border: 1px solid var(--amber-border); border-radius: 8px;
     font-size: 13px; color: var(--amber);
     align-items: center; justify-content: space-between;
   }
@@ -191,24 +130,18 @@
     font-size: 12px; color: var(--amber); cursor: pointer;
     font-family: 'Noto Sans TC', sans-serif;
   }
-
   .found-footer { padding: 0 24px 24px; }
   .confirm-btn {
-    width: 100%; padding: 16px;
-    border-radius: 12px; border: none;
+    width: 100%; padding: 16px; border-radius: 12px; border: none;
     background: var(--green); color: #fff;
-    font-size: 17px; font-weight: 700;
-    cursor: pointer; letter-spacing: 0.05em;
+    font-size: 17px; font-weight: 700; cursor: pointer;
     font-family: 'Noto Sans TC', sans-serif;
-    transition: opacity 0.15s, transform 0.1s;
+    transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.05em;
   }
   .confirm-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
-  .confirm-btn:disabled {
-    background: var(--border); color: var(--text-3); cursor: not-allowed;
-  }
+  .confirm-btn:disabled { background: var(--border); color: var(--text-3); cursor: not-allowed; }
 
-  /* ── 狀態：無訂餐 ── */
-  #state-notfound { display: none; flex-direction: column; }
+  /* 無訂餐 */
   .notfound-body { padding: 44px 32px 36px; text-align: center; }
   .alert-circle {
     width: 72px; height: 72px; border-radius: 50%;
@@ -221,16 +154,14 @@
   .notfound-sub   { font-size: 13px; color: var(--text-3); }
   .notfound-footer { padding: 0 24px 24px; }
   .back-btn {
-    width: 100%; padding: 13px;
-    border-radius: 10px; border: 1px solid var(--border);
-    background: none; color: var(--text-2);
-    font-size: 14px; cursor: pointer;
+    width: 100%; padding: 13px; border-radius: 10px;
+    border: 1px solid var(--border); background: none;
+    color: var(--text-2); font-size: 14px; cursor: pointer;
     font-family: 'Noto Sans TC', sans-serif;
   }
   .back-btn:hover { background: var(--bg); }
 
-  /* ── 狀態：完成 ── */
-  #state-done { display: none; flex-direction: column; }
+  /* 完成 */
   .done-body { padding: 44px 32px 32px; text-align: center; }
   .check-circle {
     width: 72px; height: 72px; border-radius: 50%;
@@ -239,70 +170,65 @@
     display: flex; align-items: center; justify-content: center;
     animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes pop {
-    0%   { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1);   opacity: 1; }
-  }
+  @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   .done-title  { font-size: 24px; font-weight: 900; color: var(--green); margin-bottom: 10px; }
   .done-name   { font-size: 16px; font-weight: 500; color: var(--text-1); margin-bottom: 6px; }
   .done-detail { font-size: 14px; color: var(--text-2); }
   .done-footer {
-    border-top: 1px solid var(--border);
-    padding: 14px 24px;
-    text-align: center;
-    font-size: 12px; color: var(--text-3);
+    border-top: 1px solid var(--border); padding: 14px 24px;
+    text-align: center; font-size: 12px; color: var(--text-3);
   }
   .done-footer .cd { font-weight: 700; color: var(--text-2); }
 
-  /* ── Loading overlay ── */
+  /* Loading */
   #loading {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(247,245,240,0.7);
-    backdrop-filter: blur(4px);
-    align-items: center; justify-content: center;
-    z-index: 100;
+    display: none; position: fixed; inset: 0;
+    background: rgba(247,245,240,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; z-index: 100;
   }
   #loading.show { display: flex; }
   .spinner {
     width: 36px; height: 36px;
-    border: 3px solid var(--border-dark);
-    border-top-color: var(--text-1);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
+    border: 3px solid var(--border-dark); border-top-color: var(--text-1);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 已取餐警示 */
+  .already-badge {
+    background: var(--amber-bg); color: var(--amber);
+    border: 1px solid var(--amber-border);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; margin-left: auto; flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
 
-<!-- 隱藏 input 捕捉 HID 讀卡機輸入 -->
 <input id="card-input" type="text" readonly autocomplete="off">
-
 <div id="loading"><div class="spinner"></div></div>
 
 <div class="app">
   <div class="header">
-    <div class="header-left">
+    <div>
       <div class="header-title">智慧取餐系統</div>
       <div class="header-date" id="header-date"></div>
     </div>
-    <div class="header-right">
+    <div>
       <div class="stats-label">今日取餐進度</div>
       <div class="stats-count" id="stats-count">載入中...</div>
     </div>
   </div>
 
   <div class="main">
-    <div class="card">
+    <div class="card" id="main-card">
 
       <!-- 待機 -->
-      <div id="state-idle" style="display:flex;flex-direction:column;">
+      <div id="state-idle">
         <div class="idle-body">
           <div class="pulse-ring">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.5">
-              <rect x="2" y="5" width="20" height="14" rx="2"/>
-              <path d="M2 10h20"/>
+              <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
             </svg>
           </div>
           <div class="idle-title">請刷學生證</div>
@@ -315,14 +241,14 @@
       </div>
 
       <!-- 刷卡成功 -->
-      <div id="state-found" style="display:none;flex-direction:column;">
+      <div id="state-found" style="display:none;">
         <div class="found-header">
           <div class="avatar" id="found-avatar"></div>
           <div>
             <div class="student-name" id="found-name"></div>
             <div class="student-class" id="found-class"></div>
           </div>
-          <div class="badge">已訂餐</div>
+          <div class="badge" id="found-badge">已訂餐</div>
         </div>
         <div class="meals-section">
           <div class="meals-label">選擇餐點</div>
@@ -338,12 +264,11 @@
       </div>
 
       <!-- 無訂餐 -->
-      <div id="state-notfound" style="display:none;flex-direction:column;">
+      <div id="state-notfound" style="display:none;">
         <div class="notfound-body">
           <div class="alert-circle">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 8v4m0 4h.01"/>
+              <circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/>
             </svg>
           </div>
           <div class="notfound-title">無訂餐紀錄</div>
@@ -356,7 +281,7 @@
       </div>
 
       <!-- 完成 -->
-      <div id="state-done" style="display:none;flex-direction:column;">
+      <div id="state-done" style="display:none;">
         <div class="done-body">
           <div class="check-circle">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -378,7 +303,7 @@
 
 <script>
 // ══════════════════════════════════════════
-// ⚙️  設定區：填入你的 Supabase 資訊
+// ⚙️  Supabase 設定
 // ══════════════════════════════════════════
 const SUPABASE_URL  = 'https://ixdowmddybxdesgdgecp.supabase.co'
 const SUPABASE_ANON = 'sb_publishable_fjpfXR09MR3U9dTB4u2HAg_Heiy-W5s'
@@ -387,42 +312,40 @@ const SUPABASE_ANON = 'sb_publishable_fjpfXR09MR3U9dTB4u2HAg_Heiy-W5s'
 const { createClient } = supabase
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON)
 
-// ── 全域狀態 ────────────────────────────
-let currentOrder   = null   // 目前查到的訂單
-let selectedMeal   = null   // 已選餐點
-let autoReturnTimer = null
-let countdownTimer  = null
-let todayMeals     = []
+// 全域狀態
+let currentOrder  = null
+let selectedMeal  = null
+let todayMeals    = []
+let countdownTimer = null
+let autoReturn    = null
 
-// ── 日期初始化 ───────────────────────────
-const today = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'})
+// 日期
 const todayISO = new Date().toISOString().split('T')[0]
-document.getElementById('header-date').textContent = today
-document.getElementById('footer-date').textContent = today
+const todayStr = new Date().toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' })
+document.getElementById('header-date').textContent = todayStr
+document.getElementById('footer-date').textContent = todayStr
 
 // ── HID 讀卡機捕捉 ───────────────────────
 const cardInput = document.getElementById('card-input')
 let hidBuffer = ''
 let hidTimer  = null
 
-// 持續保持 focus
 function keepFocus() { cardInput.focus() }
 document.addEventListener('click', keepFocus)
 keepFocus()
+setInterval(keepFocus, 2000) // 每2秒確保 focus 不跑掉
 
-cardInput.addEventListener('input', (e) => {
+cardInput.addEventListener('input', e => {
   hidBuffer += e.data || ''
   clearTimeout(hidTimer)
   hidTimer = setTimeout(() => {
-    if (hidBuffer.trim()) {
-      handleCard(hidBuffer.trim())
-    }
+    if (hidBuffer.trim()) handleCard(hidBuffer.trim())
     hidBuffer = ''
     cardInput.value = ''
   }, 150)
 })
 
-cardInput.addEventListener('keydown', (e) => {
+cardInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && hidBuffer.trim()) {
     clearTimeout(hidTimer)
     handleCard(hidBuffer.trim())
@@ -438,43 +361,54 @@ async function handleCard(cardUid) {
 
   try {
     // 1. 查學生
-    const { data: student, error: sErr } = await sb
+    const { data: students } = await sb
       .from('student')
       .select('student_id, name, grade')
       .eq('card_uid', cardUid)
       .eq('is_active', true)
-      .single()
+      .limit(1)
 
-    if (sErr || !student) {
+    if (!students || students.length === 0) {
       showLoading(false)
       showNotFound('未知卡號')
       return
     }
+    const student = students[0]
 
     // 2. 查今日訂單
-    const { data: order, error: oErr } = await sb
+    const { data: orders } = await sb
       .from('meal_orders')
-      .select('order_id, picked_up')
+      .select('order_id, picked_up, meal_id, final_price')
       .eq('student_id', student.student_id)
       .eq('order_date', todayISO)
-      .single()
+      .limit(1)
 
-    if (oErr || !order) {
+    if (!orders || orders.length === 0) {
       showLoading(false)
       showNotFound(student.name)
       return
     }
 
+    const order = orders[0]
+
+    // 已取餐
     if (order.picked_up) {
       showLoading(false)
-      showNotFound(student.name + '（已取餐）')
+      showAlreadyPickedUp(student.name)
       return
     }
 
     currentOrder = { ...order, student }
 
     // 3. 載入今日餐點
-    await loadMeals()
+    const { data: meals } = await sb
+      .from('meals')
+      .select('meal_id, name, price')
+      .eq('available_date', todayISO)
+      .eq('is_active', true)
+      .order('price')
+
+    todayMeals = meals || []
     showLoading(false)
     showFound(student)
 
@@ -485,27 +419,24 @@ async function handleCard(cardUid) {
   }
 }
 
-// ── 載入今日餐點 ─────────────────────────
-async function loadMeals() {
-  const { data } = await sb
-    .from('meals')
-    .select('meal_id, name, price')
-    .eq('available_date', todayISO)
-    .eq('is_active', true)
-    .order('price')
-  todayMeals = data || []
-}
-
-// ── 顯示選餐畫面 ─────────────────────────
+// ── 選餐畫面 ────────────────────────────
 function showFound(student) {
   setState('found')
   document.getElementById('found-avatar').textContent = student.name.charAt(0)
   document.getElementById('found-name').textContent   = student.name
-  document.getElementById('found-class').textContent  = '✓ 有訂餐　' + (student.grade || '')
+  document.getElementById('found-class').textContent  = '✓ 有訂餐' + (student.grade ? '　' + student.grade : '')
+  document.getElementById('found-badge').textContent  = '已訂餐'
+  document.getElementById('found-badge').className    = 'badge'
   resetMeal()
 
   const list = document.getElementById('meals-list')
   list.innerHTML = ''
+
+  if (todayMeals.length === 0) {
+    list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">今日尚未設定餐點，請洽行政老師</div>'
+    return
+  }
+
   todayMeals.forEach(m => {
     const btn = document.createElement('button')
     btn.className = 'meal-btn'
@@ -514,10 +445,19 @@ function showFound(student) {
     btn.onclick = () => selectMeal(m)
     list.appendChild(btn)
   })
+}
 
-  if (todayMeals.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">今日尚未設定餐點，請洽行政老師</div>'
-  }
+function showAlreadyPickedUp(name) {
+  setState('found')
+  document.getElementById('found-avatar').textContent = name.charAt(0)
+  document.getElementById('found-name').textContent   = name
+  document.getElementById('found-class').textContent  = '今日已取餐'
+  document.getElementById('found-badge').textContent  = '已取餐'
+  document.getElementById('found-badge').className    = 'already-badge'
+  document.getElementById('meals-list').innerHTML     = '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">此學生今日已完成取餐</div>'
+  document.getElementById('selected-bar').classList.remove('show')
+  document.getElementById('confirm-btn').disabled = true
+  autoReturn = setTimeout(goIdle, 4000)
 }
 
 function selectMeal(meal) {
@@ -527,7 +467,7 @@ function selectMeal(meal) {
   document.getElementById('selected-bar').classList.add('show')
   document.getElementById('selected-label').textContent = meal.name + '　$' + meal.price
   document.getElementById('confirm-btn').disabled = false
-  document.getElementById('done-detail').textContent   = meal.name + '　$' + meal.price
+  document.getElementById('done-detail').textContent = meal.name + '　$' + meal.price
 }
 
 function resetMeal() {
@@ -566,10 +506,17 @@ async function confirmPickup() {
 }
 
 // ── 無訂餐畫面 ───────────────────────────
+function showUnknownCard() {
+  setState('notfound')
+  document.getElementById('notfound-name').textContent = '此卡號未登記在系統中'
+  document.getElementById('notfound-sub').textContent = '請洽行政老師新增學生資料'
+  autoReturn = setTimeout(goIdle, 5000)
+}
+
 function showNotFound(name) {
   setState('notfound')
   document.getElementById('notfound-name').textContent = name
-  autoReturnTimer = setTimeout(goIdle, 5000)
+  autoReturn = setTimeout(goIdle, 5000)
 }
 
 // ── 倒數計時 ────────────────────────────
@@ -584,7 +531,7 @@ function startCountdown() {
 }
 
 function clearTimers() {
-  clearTimeout(autoReturnTimer)
+  clearTimeout(autoReturn)
   clearInterval(countdownTimer)
 }
 
@@ -600,7 +547,7 @@ function setState(s) {
   ['idle','found','notfound','done'].forEach(id => {
     document.getElementById('state-' + id).style.display = 'none'
   })
-  document.getElementById('state-' + s).style.display = 'flex'
+  document.getElementById('state-' + s).style.display = 'block'
   keepFocus()
 }
 
@@ -608,7 +555,7 @@ function showLoading(v) {
   document.getElementById('loading').classList.toggle('show', v)
 }
 
-// ── 統計數字 ────────────────────────────
+// ── 統計 ─────────────────────────────────
 async function updateStats() {
   const { count: total } = await sb
     .from('meal_orders')
@@ -621,19 +568,74 @@ async function updateStats() {
     .eq('order_date', todayISO)
     .eq('picked_up', true)
 
-  const t = total || 0
-  const p = picked || 0
-  document.getElementById('stats-count').textContent = `${p} / ${t} 人`
+  const t = total || 0, p = picked || 0
+  document.getElementById('stats-count').textContent  = `${p} / ${t} 人`
   document.getElementById('footer-stats').textContent = `已取餐 ${p} / ${t} 人`
 }
 
-// 初始載入統計
 updateStats()
 
-// Realtime 訂閱（其他裝置確認取餐時自動更新統計）
-sb.channel('meal_orders')
+// Realtime 統計更新
+sb.channel('meal_orders_stats')
   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'meal_orders' }, updateStats)
   .subscribe()
+
+// Realtime 監聽刷卡事件
+sb.channel('scan_events')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scan_events' },
+    async (payload) => {
+      const ev = payload.new
+      console.log('刷卡事件收到:', ev)
+
+      // 未知卡號（不在系統裡）
+      if (!ev.student_id) {
+        showUnknownCard()
+        return
+      }
+
+      if (!ev.has_order) {
+        showNotFound(ev.student_name || '未知學生')
+        return
+      }
+
+      // 載入今日餐點
+      const { data: meals } = await sb
+        .from('meals')
+        .select('meal_id, name, price')
+        .eq('available_date', todayISO)
+        .eq('is_active', true)
+        .order('price')
+
+      todayMeals = meals || []
+
+      // 查訂單是否已取餐
+      const { data: orders } = await sb
+        .from('meal_orders')
+        .select('order_id, picked_up, meal_id, final_price')
+        .eq('order_id', ev.order_id)
+        .limit(1)
+
+      const order = orders?.[0]
+      if (!order) { showNotFound(ev.student_name); return }
+
+      currentOrder = {
+        ...order,
+        student: {
+          student_id: ev.student_id,
+          name: ev.student_name,
+          grade: ev.grade
+        }
+      }
+
+      if (order.picked_up) {
+        showAlreadyPickedUp(ev.student_name)
+        return
+      }
+
+      showFound({ student_id: ev.student_id, name: ev.student_name, grade: ev.grade })
+    }
+  )
+  .subscribe((status) => console.log('Realtime 狀態:', status))
 </script>
 </body>
 </html>
