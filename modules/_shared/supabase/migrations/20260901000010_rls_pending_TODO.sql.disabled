@@ -1,0 +1,20 @@
+-- ⚠️ 尚未可用 — 這個檔案刻意用 .sql.disabled 副檔名，
+-- Supabase CLI 不會自動執行它，避免誤套用導致這些表完全鎖死存取。
+--
+-- 待辦：先設計好對應的 RLS policy，確認 policy 沒問題後，
+-- 把這個檔案改名成正常的 .sql 並加上正確的時間戳記。
+--
+-- 目前 RLS 未啟用的表（截至 2026-09-01）：
+-- student, meals, meal_orders, attendance, scan_events,
+-- config_class_type, config_grade_alias, config_subject_alias
+
+ALTER TABLE public.student ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scan_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.config_class_type ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.config_grade_alias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.config_subject_alias ENABLE ROW LEVEL SECURITY;
+
+-- TODO: 在這裡加上對應的 CREATE POLICY 陳述式
