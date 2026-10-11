@@ -619,13 +619,25 @@ const stuIdFromLabel = l => LOOK.students.find(s => stuLabel(s) === l)?.id || nu
 let STU = null;   // 學生名單（含學校、家長電話），帶入預設值用
 async function stuDefaults(force) { if (!STU || force) STU = await rpc('admin_list', { p_key: 'students' }); return STU; }
 const SCHOOLS = ['照南國中', '君毅國中', '竹南國中', '大同國中'];
+// 學年度從 8 月開始；入學年＝升國一那一年（西元）
+function acadYear() { const d = new Date(); return d.getMonth() >= 7 ? d.getFullYear() : d.getFullYear() - 1; }
+function gradeOf(y) {
+  if (!y) return '未填入學年';
+  const g = acadYear() - Number(y) + 7;
+  return g < 7 ? '尚未入學' : g > 9 ? '已畢業' : ['國一', '國二', '國三'][g - 7];
+}
 
 class DataTable {
   constructor(cfg) {
     this.cfg = cfg; this.rows = []; this.sel = new Set(); this.filters = {}; this.q = ''; this.page = 0;
     const p = PREFS[cfg.key] || {};
     this.order = (p.order || []).filter(k => cfg.cols.some(c => c.k === k));
-    cfg.cols.forEach(c => { if (!this.order.includes(c.k)) this.order.push(c.k); });
+    // 新加的欄位放回它預設的位置（接在前一個欄位後面），不要都擠到最後
+    cfg.cols.forEach((c, i) => {
+      if (this.order.includes(c.k)) return;
+      const prev = cfg.cols.slice(0, i).reverse().find(x => this.order.includes(x.k));
+      this.order.splice(prev ? this.order.indexOf(prev.k) + 1 : 0, 0, c.k);
+    });
     this.hidden = new Set(p.hidden || cfg.cols.filter(c => c.hide).map(c => c.k));
     this.sort = p.sort !== undefined ? p.sort : (cfg.sort || null);
     this.size = p.size || 50;
@@ -707,7 +719,7 @@ class DataTable {
     const cls = c => (['num', 'money'].includes(c.type) ? 'num' : '') + (c.type === 'wrap' ? ' wrap' : '');
     const sums = vis.some(c => c.sum);
     const allSel = rows.length > 0 && rows.every(r => this.sel.has(this.rid(r)));
-    const filtered = Object.values(this.filters).some(Boolean) || this.q;
+    const filtered = Object.entries(this.filters).some(([k, v]) => v && !(this.locked && this.locked[k] === v)) || this.q;
     h.innerHTML = `
       <div class="dt-tools">
         <input class="in" data-act="q" placeholder="搜尋全部欄位" value="${esc(this.q)}" aria-label="搜尋">
@@ -766,7 +778,7 @@ class DataTable {
       if (act === 'cols') return this.colsPop(t.closest('[data-act]'));
       if (act === 'csv') return this.csv();
       if (act === 'add') return openForm(this, null);
-      if (act === 'clear') { this.filters = {}; this.q = ''; this.page = 0; return this.render(); }
+      if (act === 'clear') { this.filters = { ...(this.locked || {}) }; this.q = ''; this.page = 0; return this.render(); }
       if (act === 'prev') { this.page--; return this.render(); }
       if (act === 'next') { this.page++; return this.render(); }
       const b = t.closest('[data-bulk]');
@@ -790,6 +802,7 @@ class DataTable {
     p.style.left = Math.max(8, Math.min(r.left + scrollX, scrollX + innerWidth - 270)) + 'px';
     p.onchange = e => { const k = e.target.dataset.k; if (!k) return; e.target.checked ? this.hidden.delete(k) : this.hidden.add(k); this.savePrefs(); this.render(); };
     p.onclick = e => {
+      e.stopPropagation();   // 重畫欄位清單時不要被當成「點到外面」而關掉
       const up = e.target.dataset.up, dn = e.target.dataset.dn;
       if (up !== undefined || dn !== undefined) {
         const i = +(up ?? dn), j = up !== undefined ? i - 1 : i + 1;
@@ -802,7 +815,7 @@ class DataTable {
       }
       if (e.target.hasAttribute('data-done')) p.remove();
     };
-    setTimeout(() => document.addEventListener('click', function off(ev) { if (!p.contains(ev.target)) { p.remove(); document.removeEventListener('click', off); } }), 0);
+    setTimeout(() => document.addEventListener('click', function off(ev) { if (!p.contains(ev.target) && document.contains(ev.target)) { p.remove(); document.removeEventListener('click', off); } }), 0);
   }
   csv() {
     const vis = this.vis();
@@ -1113,9 +1126,10 @@ const TABLES = {
   students: () => ({
     key: 'students', title: '學生名單', item: '學生', id: 'student_id',
     load: () => rpc('admin_list', { p_key: 'students' }),
-    note: '報名表的「金牌班內生」從這份名單搜尋。學生不提供刪除，畢業或離班請取消「在學」。',
+    get note() { const a = acadYear(); return `年級依入學年（升國一那年，西元）計算：目前 ${a - 1911} 學年度，入學年 ${a - 2} 是國三、${a - 1} 是國二、${a} 是國一。學生不提供刪除，畢業或離班請取消「在學」。`; },
     cols: [
       { k: 'name', t: '姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'grade', t: '年級', type: 'chip', get: r => gradeOf(r.entry_year), chips: { '國三': 'c-ok', '國二': 'c-in', '國一': 'c-lilac', '已畢業': 'c-grey' } },
       { k: 'school_name', t: '學校' },
       { k: 'entry_year', t: '入學年', type: 'num' },
       { k: 'is_active', t: '在學', type: 'bool' },
@@ -1127,11 +1141,11 @@ const TABLES = {
       { k: 'kaocai_count', t: '考猜報名', type: 'num' },
       { k: 'created_at', t: '建立時間', type: 'dt', hide: true },
     ],
-    defaults: () => ({ is_active: true }),
+    defaults: () => ({ is_active: true, entry_year: acadYear() - 2 }),
     form: () => [
       { k: 'name', t: '姓名', req: true },
       { k: 'school_name', t: '學校', list: SCHOOLS },
-      { k: 'entry_year', t: '入學年（西元）', type: 'number', hint: '例如 2024' },
+      { k: 'entry_year', t: '入學年（升國一那年，西元）', type: 'number', hint: `目前國三填 ${acadYear() - 2}、國二填 ${acadYear() - 1}、國一填 ${acadYear()}` },
       { k: 'is_active', t: '在學', type: 'bool', on: '目前在學（報名表搜尋得到）' },
       { k: 'phone', t: '學生電話', type: 'tel' },
       { k: 'email', t: '學生 Email', type: 'email' },
@@ -1351,14 +1365,21 @@ const SUBTABS = {
   courses: [['courses', '課程'], ['categories', '活動種類'], ['layouts', '教室座位格局']],
   attendance_fee: [['attendance_fee', '出席與學費'], ['fee_rules', '學費規則']],
 };
+// 學生名單：預設只看國三，可切換全部
+const STUDENT_TABS = [['g9', '國三'], ['all', '全部學生']];
 S.sub = {};
 async function openTablePage(page) {
-  const tabs = SUBTABS[page];
-  const key = tabs ? (S.sub[page] || tabs[0][0]) : page;
+  const tabs = page === 'students' ? STUDENT_TABS : SUBTABS[page];
+  const sub = tabs ? (S.sub[page] || tabs[0][0]) : null;
+  const key = page === 'students' ? 'students' : (sub || page);
   $('subtabs').hidden = !tabs;
-  $('subtabs').innerHTML = tabs ? tabs.map(([k, t]) => `<button type="button" class="pill ${k === key ? 'on' : ''}" data-sub="${k}">${t}</button>`).join('') : '';
+  $('subtabs').innerHTML = tabs ? tabs.map(([k, t]) => `<button type="button" class="pill ${k === sub ? 'on' : ''}" data-sub="${k}">${t}</button>`).join('') : '';
   if (!TB[key]) TB[key] = new DataTable(TABLES[key]());
   const tb = TB[key];
+  if (page === 'students') {
+    if (sub === 'g9') { tb.filters.grade = '國三'; tb.locked = { grade: '國三' }; }
+    else { if (tb.filters.grade === '國三') tb.filters.grade = ''; tb.locked = null; }
+  }
   if (S.jump && key === 'item_history') { tb.filters = { name: S.jump }; tb.q = ''; S.jump = null; }
   tb.host = $('dtHost'); tb.bind();
   await tb.reload();
