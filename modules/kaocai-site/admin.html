@@ -187,6 +187,7 @@
     <a href="#item_history" data-page="item_history">加退選紀錄</a>
     <a href="#logs" data-page="logs">修改紀錄</a>
     <div class="sec">行政</div>
+    <a href="#changes" data-page="changes">資料異動審核 <span class="chip c-cx" id="chgBadge" hidden></span></a>
     <a href="#students" data-page="students">學生名單</a>
     <a href="#courses" data-page="courses">課程設定</a>
     <a href="#attendance_fee" data-page="attendance_fee">出席與學費</a>
@@ -319,6 +320,7 @@ async function onSession(session) {
   $('who').textContent = me.name || '';
   $('app').hidden = false;
   PREFS = await rpc('admin_get_prefs').catch(() => ({})) || {};
+  rpc('admin_profile_changes').then(setChgBadge).catch(() => {});
   await loadBootstrap();
   route();
 }
@@ -333,7 +335,7 @@ async function loadBootstrap() {
   $('cat').value = S.cat;
   fillBatches();
 }
-const TABLE_PAGES = ['registrations', 'item_history', 'logs', 'students', 'courses', 'attendance_fee', 'exam_results'];
+const TABLE_PAGES = ['registrations', 'item_history', 'logs', 'changes', 'students', 'courses', 'attendance_fee', 'exam_results'];
 const isTablePage = () => TABLE_PAGES.includes(S.page);
 function fillBatches() {
   const c = CATS.find(x => x.category === S.cat);
@@ -368,7 +370,7 @@ function route() {
   $('page-seats').hidden = S.page !== 'seats';
   $('page-table').hidden = !isTablePage();
   // 學生名單、會考成績和活動無關，隱藏活動／場次選單
-  const noScope = ['students', 'exam_results'].includes(S.page);
+  const noScope = ['students', 'exam_results', 'changes'].includes(S.page);
   $('cat').hidden = $('batch').hidden = $('regOpen').hidden = noScope;
   fillBatches();
   closeDrawer();
@@ -608,8 +610,14 @@ const fmt = {
 };
 const chipFor = (v, map) => (v == null || v === '') ? '' : `<span class="chip ${(map || {})[v] || 'c-grey'}">${esc(v)}</span>`;
 const firstBatch = () => (CATS.find(c => c.category === S.cat)?.batches || []).slice().sort()[0];
-const stuLabel = s => `${s.name}（${s.school || '—'}${s.active ? '' : '・非在學'}）`;
+// 學生下拉只顯示姓名；同名時加上「同名第 n 位」區分
+function stuLabel(s) {
+  const same = LOOK.students.filter(x => x.name === s.name);
+  return same.length > 1 ? `${s.name}（同名第 ${same.indexOf(s) + 1} 位）` : s.name;
+}
 const stuIdFromLabel = l => LOOK.students.find(s => stuLabel(s) === l)?.id || null;
+let STU = null;   // 學生名單（含學校、家長電話），帶入預設值用
+async function stuDefaults(force) { if (!STU || force) STU = await rpc('admin_list', { p_key: 'students' }); return STU; }
 const SCHOOLS = ['照南國中', '君毅國中', '竹南國中', '大同國中'];
 
 class DataTable {
@@ -874,7 +882,12 @@ function collect() {
 $('dBody').onchange = e => {
   if (!DR) return;
   const f = DR.fields.find(x => x.k === e.target.dataset.f);
-  if (f?.rerender) { DR.v = collect(); drawForm(); }
+  if (f?.rerender || f?.onPick) { DR.v = collect(); if (f.onPick) f.onPick(DR.v); drawForm(); }
+};
+// 從下拉選到學生時立刻帶入（不必等離開欄位）
+$('dBody').oninput = e => {
+  if (!DR || e.target.dataset.f !== 'student_label' || !stuIdFromLabel(e.target.value)) return;
+  $('dBody').onchange(e);
 };
 $('dFoot').onclick = async e => {
   if (!DR) return;
@@ -968,7 +981,7 @@ const TABLES = {
     ],
     defaults: () => ({ category: S.cat, batch: S.tbatch || firstBatch(), affiliation: '金牌班內生', applicant_role: '家長', course_ids: [], meals: {} }),
     prepare: async v => {
-      await lookups(); await coursesOf(v.category || S.cat);
+      await lookups(); await coursesOf(v.category || S.cat); await stuDefaults();
       if (v.name && !v.student_name) v.student_name = v.name;
       if (v.student_id) { const s = LOOK.students.find(x => x.id === v.student_id); if (s) v.student_label = stuLabel(s); }
     },
@@ -981,10 +994,11 @@ const TABLES = {
               : { t: '場次', type: 'ro', val: `${v.batch}（場次只能由家長在報名表自行更換）` },
         { k: 'affiliation', t: '班內／班外', type: 'radio', opts: ['金牌班內生', '班外生'], rerender: true, req: true },
         v.affiliation === '金牌班內生'
-          ? { k: 'student_label', t: '學生（從學生名單選）', type: 'student', req: true, hint: '打字搜尋。名單裡沒有的話，先到「學生名單」新增。' }
+          ? { k: 'student_label', t: '學生姓名（從學生名單選）', type: 'student', req: true, hint: '打字搜尋。選好後會自動帶入學校和家長手機；名單裡沒有的話，先到「學生名單」新增。',
+              onPick: o => { const st = STU.find(x => x.student_id === o.student_id); if (st) { o.school = st.school_name || ''; o.parent_phone = st.parent_phone || ''; o._picked = st; } } }
           : { k: 'student_name', t: '學生姓名', req: true },
-        { k: 'school', t: '學校', list: SCHOOLS },
-        { k: 'parent_phone', t: '家長手機', type: 'tel', hint: '09 開頭，共 10 碼' },
+        { k: 'school', t: '學校', list: SCHOOLS, hint: v.affiliation === '金牌班內生' ? '和學生資料不同時，會送到「資料異動審核」等行政確認' : '' },
+        { k: 'parent_phone', t: '家長手機', type: 'tel', hint: '09 開頭，共 10 碼' + (v.affiliation === '金牌班內生' ? '。和學生資料不同時，會送到「資料異動審核」' : '') },
         { k: 'applicant_role', t: '填表人', type: 'radio', opts: ['家長', '學生'] },
         { k: 'email', t: '登入 Email', type: 'email', hint: '家長用這個 Email 登入報名表，才看得到這筆報名' },
         { k: 'courses', t: '報名科目', type: 'courses', sel: v.course_ids || [],
@@ -1058,6 +1072,44 @@ const TABLES = {
     ],
   }),
 
+  changes: () => ({
+    key: 'changes', title: '資料異動審核', item: '資料異動', id: 'id',
+    load: async () => { const rows = await rpc('admin_profile_changes'); setChgBadge(rows); return rows; },
+    note: '家長報名時填的學校或家長手機，和學生資料不一樣時會列在這裡。按「更新學生資料」才會改到學生名單；家長手機會新增成這位學生的主要聯絡人，舊號碼保留。',
+    empty: '目前沒有需要審核的資料異動',
+    rowClass: r => r.status === '待審核' ? '' : 'cx',
+    cols: [
+      { k: 'status', t: '狀態', type: 'chip', chips: { '待審核': 'c-out', '已更新': 'c-ok', '不更新': 'c-grey' } },
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'field', t: '項目', type: 'chip', chips: { '學校': 'c-in', '家長手機': 'c-lilac' } },
+      { k: 'old_value', t: '原本的學生資料' },
+      { k: 'new_value', t: '家長填的新資料', html: r => `<b>${esc(r.new_value)}</b>` },
+      { k: 'current_value', t: '目前學生資料', hide: true },
+      { k: 'source', t: '來源', type: 'chip' },
+      { k: 'submitted_by', t: '填寫人' },
+      { k: 'batch', t: '場次', type: 'chip', hide: true },
+      { k: 'created_at', t: '送出時間', type: 'dt' },
+      { k: 'reviewed_by', t: '審核人', hide: true },
+      { k: 'reviewed_at', t: '審核時間', type: 'dt', hide: true },
+    ],
+    bulk: [
+      { label: '更新學生資料', run: (rows, tb) => reviewMany(rows, true, tb) },
+      { label: '不更新', run: (rows, tb) => reviewMany(rows, false, tb) },
+    ],
+    form: v => [
+      { t: '學生', type: 'ro', val: v.name },
+      { t: '項目', type: 'ro', val: v.field },
+      { t: '學生資料目前是', type: 'ro', val: v.current_value || '（空白）' },
+      { t: '家長這次填的是', type: 'ro', val: v.new_value },
+      { t: '來源', type: 'ro', val: `${v.source}・${v.submitted_by || ''}・${fmt.dt(v.created_at)}` },
+      v.status !== '待審核' ? { t: '審核結果', type: 'ro', val: `${v.status}・${v.reviewed_by || ''}・${fmt.dt(v.reviewed_at)}` } : null,
+    ],
+    actions: row => row.status !== '待審核' ? [] : [
+      { label: '更新學生資料', run: r => rpc('admin_review_change', { p_id: r.id, p_apply: true }).then(() => { STU = null; return '學生資料已更新'; }) },
+      { label: '不更新', run: r => rpc('admin_review_change', { p_id: r.id, p_apply: false }).then(() => '已標記為不更新') },
+    ],
+  }),
+
   students: () => ({
     key: 'students', title: '學生名單', item: '學生', id: 'student_id',
     load: () => rpc('admin_list', { p_key: 'students' }),
@@ -1086,7 +1138,7 @@ const TABLES = {
       { k: 'line_id', t: 'LINE ID' },
     ],
     validate: o => (o.name || '').trim().length < 2 ? '請填寫學生姓名' : null,
-    onSave: async (o, isNew, row) => { await rpc('admin_save_student', { p: { ...o, student_id: isNew ? null : row.student_id } }); LOOK = null; },
+    onSave: async (o, isNew, row) => { await rpc('admin_save_student', { p: { ...o, student_id: isNew ? null : row.student_id } }); LOOK = null; STU = null; },
   }),
 
   courses: () => ({
@@ -1282,6 +1334,18 @@ const TABLES = {
   }),
 };
 
+async function reviewMany(rows, apply, tb) {
+  const xs = rows.filter(r => r.status === '待審核');
+  if (!xs.length) return toast('選取的資料都已經審核過了', true);
+  if (!confirm(`確定把這 ${xs.length} 筆標記為「${apply ? '更新學生資料' : '不更新'}」？`)) return;
+  try { for (const r of xs) await rpc('admin_review_change', { p_id: r.id, p_apply: apply }); toast(`已處理 ${xs.length} 筆`); STU = null; }
+  catch (e) { toast(e.message, true); }
+  tb.sel.clear(); await tb.reload();
+}
+function setChgBadge(rows) {
+  const n = (rows || []).filter(r => r.status === '待審核').length;
+  $('chgBadge').hidden = !n; $('chgBadge').textContent = n;
+}
 const TB = {};
 const SUBTABS = {
   courses: [['courses', '課程'], ['categories', '活動種類'], ['layouts', '教室座位格局']],

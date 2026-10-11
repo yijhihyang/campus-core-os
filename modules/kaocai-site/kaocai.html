@@ -77,6 +77,9 @@
   .results button:first-child{border-top:0}
   .results button:hover{background:var(--sky)}
   .results small{color:var(--muted)}
+  .keepnote{margin-top:6px;font-size:13px;color:var(--muted)}
+  .keepnote .link{font-size:13px}
+  #phone[readonly]{background:var(--grey,#F1EFE8);color:var(--muted)}
   .picked{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;background:var(--mint);color:var(--mint-ink);font-weight:700}
   .note{font-size:12px;color:var(--muted);margin-top:10px}
   .mealdays{display:grid;gap:8px}
@@ -146,6 +149,7 @@
 
       <label class="f" for="phone">家長手機 <small>（上課提醒會傳到這支電話）</small></label>
       <input type="text" id="phone" inputmode="numeric" maxlength="12" placeholder="09xxxxxxxx" autocomplete="tel">
+      <div id="phoneKeep" class="keepnote" hidden>沿用學生資料中的號碼。電話換了嗎？<button type="button" class="link" id="phoneChange">改填新號碼</button></div>
 
       <label class="f">學校</label>
       <div class="chips" id="school">
@@ -156,6 +160,7 @@
         <label class="chip"><input type="radio" name="school" value="其他"><span>其他</span></label>
       </div>
       <input type="text" id="schoolOther" maxlength="20" placeholder="請輸入學校名稱" hidden style="margin-top:8px">
+      <div id="schoolKeep" class="keepnote" hidden>已帶入學生資料中的學校。轉學的話直接改選，櫃台確認後會更新資料。</div>
 
       <label class="f">報名場次</label>
       <div class="chips" id="batches"></div>
@@ -202,6 +207,7 @@ async function rpc(fn, args) {
 }
 
 let CAT = null;          // 目前開放的活動
+let keepPhone = false;   // 班內生沿用資料庫中的家長手機（只顯示遮罩）
 let picked = null;       // 選到的班內生 {student_id, name}
 let editing = null;      // 正在修改的報名
 
@@ -224,7 +230,7 @@ function renderCourses(selected) {
   for (const c of b.courses) {
     if (c.date !== last) { html += `<div class="day">${md(c.date)}</div>`; last = c.date; }
     const on = selected ? selected.includes(c.course_id) : true;
-    html += `<label class="subj"><input type="checkbox" value="${c.course_id}" ${on ? 'checked' : ''}><b>${esc(c.name)}</b>
+    html += `<label class="subj"><input type="checkbox" value="${c.course_id}" data-date="${c.date}" data-start="${c.start}" data-end="${c.end}" ${on ? 'checked' : ''}><b>${esc(c.name)}</b>
       <span class="t">${md(c.date)} ${c.start}–${c.end}${c.teacher ? '・' + esc(c.teacher) + ' 老師' : ''}</span></label>`;
   }
   $('subjects').innerHTML = html;
@@ -235,7 +241,13 @@ let MEALS = {};
 function renderMeals() {
   const b = CAT.batches.find(x => x.batch === val('batch'));
   const days = [...new Set(b.courses.map(c => c.date))].sort();
+  // 只有當天勾的課「12:30 前結束」和「12:30–14:00 開始」都有，才需要訂中餐
+  const picked = [...$('subjects').querySelectorAll('input:checked')].map(x => x.dataset);
+  const needs = d => picked.some(x => x.date === d && x.end <= '12:30') &&
+                     picked.some(x => x.date === d && x.start >= '12:30' && x.start < '14:00');
   $('meals').innerHTML = days.map(d => {
+    if (!needs(d)) return `<div class="mealday"><b>${md(d)}</b><span class="note" style="margin:0">這天的課沒有跨中午，不需要訂餐</span>
+      <input type="radio" name="meal_${d}" value="不訂餐" checked hidden></div>`;
     const cur = MEALS[d] || '葷食';
     return `<div class="mealday"><b>${md(d)}</b><div class="chips">` +
       ['葷食', '素食', '不訂餐'].map(m =>
@@ -253,7 +265,9 @@ $('all').onclick = () => {
   const boxes = [...$('subjects').querySelectorAll('input')];
   const allOn = boxes.every(x => x.checked);
   boxes.forEach(x => x.checked = !allOn);
+  renderMeals();
 };
+$('subjects').onchange = () => renderMeals();
 
 /* ---------- 登入 ---------- */
 let pendingEmail = '';
@@ -322,15 +336,28 @@ $('newBtn').onclick = () => openForm(null);
 $('closeForm').onclick = () => { $('reg').hidden = true; };
 
 /* ---------- 報名表 ---------- */
-function setPicked(s) {
+function setKeepPhone(on, hint) {
+  keepPhone = on;
+  $('phone').readOnly = on;
+  $('phoneKeep').hidden = !on;
+  if (on) $('phone').value = hint;
+}
+// fromSearch：家長剛從搜尋結果選了學生 → 帶入資料庫中的學校和家長手機
+function setPicked(s, fromSearch) {
   picked = s;
   $('pickedBox').hidden = !s; $('sname').hidden = !!s;
   $('results').hidden = true; $('notFound').hidden = true;
-  if (s) {
-    $('pickedName').textContent = s.name + (s.school ? `（${s.school}）` : '');
-    if (s.school && !val('school')) setSchool(s.school);
+  if (s) $('pickedName').textContent = s.name;
+  if (fromSearch && s) {
+    if (s.school) { setSchool(s.school); $('schoolKeep').hidden = false; }
+    if (s.phone_hint) setKeepPhone(true, s.phone_hint);
+  }
+  if (!s) {
+    $('schoolKeep').hidden = true;
+    if (keepPhone) { setKeepPhone(false); $('phone').value = MINE.find(x => x.parent_phone)?.parent_phone ?? ''; }
   }
 }
+$('phoneChange').onclick = () => { setKeepPhone(false); $('phone').value = ''; $('phone').focus(); };
 function setSchool(s) {
   if (!s) { document.querySelectorAll('input[name=school]').forEach(x => x.checked = false); $('schoolOther').hidden = true; return; }
   if (setVal('school', s)) { $('schoolOther').hidden = true; return; }
@@ -356,10 +383,14 @@ $('sname').oninput = () => {
   searchTimer = setTimeout(async () => {
     try {
       const list = await rpc('special_student_search', { p_q: q });
-      $('results').innerHTML = list.map((s, i) =>
-        `<button type="button" data-i="${i}"><span>${esc(s.name)}</span><small>${esc(s.school || '')}</small></button>`).join('');
+      const seen = {};
+      $('results').innerHTML = list.map((s, i) => {
+        const dup = list.filter(x => x.name === s.name).length > 1;
+        seen[s.name] = (seen[s.name] || 0) + 1;
+        return `<button type="button" data-i="${i}"><span>${esc(s.name)}</span>${dup ? `<small>同名第 ${seen[s.name]} 位</small>` : ''}</button>`;
+      }).join('');
       $('results').hidden = !list.length;
-      $('results').onclick = e => { const b = e.target.closest('button'); if (b) setPicked(list[+b.dataset.i]); };
+      $('results').onclick = e => { const b = e.target.closest('button'); if (b) setPicked(list[+b.dataset.i], true); };
       $('notFound').hidden = false;
     } catch (e) { /* 忽略搜尋錯誤 */ }
   }, 250);
@@ -372,6 +403,7 @@ function openForm(r) {
   $('formTitle').textContent = r ? `修改報名：${r.student_name}` : '新增報名';
   setVal('role', r?.applicant_role || '家長');
   setVal('aff', r?.affiliation || '金牌班內生'); syncAff();
+  setKeepPhone(false); $('schoolKeep').hidden = true;
   $('sname').value = r?.student_id ? '' : (r?.student_name || '');
   setPicked(r?.student_id ? { student_id: r.student_id, name: r.student_name, school: r.school } : null);
   setSchool(r?.school || null);
@@ -391,8 +423,9 @@ $('reg').onsubmit = async e => {
   const school = val('school') === '其他' ? ($('schoolOther').value.trim() ? '其他：' + $('schoolOther').value.trim() : '') : (val('school') || '');
   const courses = [...$('subjects').querySelectorAll('input:checked')].map(x => x.value);
   if (name.length < 2) return show($('regMsg'), aff === '金牌班內生' ? '請搜尋並選擇學生，或輸入學生全名' : '請輸入學生姓名');
-  const phone = $('phone').value.replace(/\D/g, '');
-  if (!/^09\d{8}$/.test(phone)) return show($('regMsg'), '家長手機請填 09 開頭的 10 碼');
+  const useKept = keepPhone && aff === '金牌班內生' && picked;
+  const phone = useKept ? '' : $('phone').value.replace(/\D/g, '');
+  if (!useKept && !/^09\d{8}$/.test(phone)) return show($('regMsg'), '家長手機請填 09 開頭的 10 碼');
   if (!school) return show($('regMsg'), '請選擇學校');
   if (!courses.length) return show($('regMsg'), '請至少選一個科目');
   $('submit').disabled = true;
@@ -401,7 +434,7 @@ $('reg').onsubmit = async e => {
       registration_id: editing ? editing.registration_id : null,
       category: CAT.category, batch: val('batch'), applicant_role: val('role'), affiliation: aff,
       student_id: aff === '金牌班內生' && picked ? picked.student_id : null, student_name: name,
-      school, parent_phone: phone, course_ids: courses, meals: collectMeals(), memo: $('memo').value
+      school, parent_phone: phone, keep_phone: !!useKept, course_ids: courses, meals: collectMeals(), memo: $('memo').value
     } });
     show($('regMsg'), `已報名！${res.student_name} 的報名已${editing ? '更新' : '送出'}。`, 'ok');
     await loadMine();
