@@ -868,6 +868,15 @@ $('dClose').onclick = closeDrawer;
 $('drawerBg').onclick = closeDrawer;
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && DR) closeDrawer(); });
 $('dBody').onsubmit = e => e.preventDefault();
+// Enter＝儲存（中文輸入法選字時的 Enter 不算；備註等多行欄位要換行，用 ⌘/Ctrl＋Enter 儲存）
+$('dBody').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229 || !DR) return;
+  if (e.target.tagName === 'TEXTAREA' && !(e.metaKey || e.ctrlKey)) return;
+  if (e.target.tagName === 'BUTTON') return;
+  if (!$('dConfirm')?.hidden) return;
+  const btn = $('dSave'); if (!btn || btn.disabled) return;
+  e.preventDefault(); btn.click();
+});
 async function openForm(tb, row) {
   const cfg = tb.cfg, isNew = !row;
   const v = Object.assign({}, cfg.defaults ? cfg.defaults() : {}, row ? JSON.parse(JSON.stringify(row)) : {});
@@ -883,7 +892,7 @@ function drawForm() {
   DR.fields = cfg.form(v, isNew, row).filter(Boolean);
   $('dBody').innerHTML = DR.fields.map(f => fieldHtml(f, v)).join('');
   DR.acts = cfg.actions ? cfg.actions(row, isNew).filter(Boolean) : [];
-  $('dFoot').innerHTML = `${cfg.onSave ? '<button type="button" class="btn" id="dSave">儲存</button>' : ''}
+  $('dFoot').innerHTML = `${cfg.onSave ? '<button type="button" class="btn" id="dSave" title="快捷鍵：Enter">儲存 <span style="font-weight:400;opacity:.7;font-size:12px">Enter</span></button>' : ''}
     ${DR.acts.map((a, i) => `<button type="button" class="btn ${a.danger ? 'danger' : 'ghost'} sm" data-da="${i}">${esc(a.label)}</button>`).join('')}
     <span class="spacer"></span>${!isNew && cfg.onDelete ? '<button type="button" class="btn danger sm" id="dDel">刪除</button>' : ''}
     <div id="dConfirm" style="width:100%" hidden></div>`;
@@ -983,6 +992,8 @@ const CH = {
 const reqText = (o, k, label) => (!o[k] || !String(o[k]).trim()) ? `請填寫${label}` : null;
 const scopeRows = rows => (rows || []).filter(r => !S.tbatch || r.batch === S.tbatch);
 
+// 後台新增的報名沒有填表人身分，一律視為「行政協助」
+const roleOf = r => r.applicant_role || (r.source === '後台新增' ? '行政協助' : '');
 const TABLES = {
   registrations: () => ({
     key: 'registrations', title: '報名總表', item: '報名', id: 'registration_id',
@@ -998,7 +1009,7 @@ const TABLES = {
       { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
       { k: 'school', t: '學校' },
       { k: 'parent_phone', t: '家長手機' },
-      { k: 'applicant_role', t: '填表人', type: 'chip' },
+      { k: 'applicant_role', t: '填表人', type: 'chip', get: r => roleOf(r), chips: { '行政協助': 'c-lilac' } },
       { k: 'email', t: '登入 Email' },
       { k: 'subject_count', t: '科目數', type: 'num' },
       { k: 'subjects', t: '報名科目', type: 'wrap' },
@@ -1024,7 +1035,7 @@ const TABLES = {
           try { toast(await copyText(xs.map(r => r.reminder).join('\n\n——————\n\n'), `已複製 ${xs.length} 則提醒訊息`)); } catch (e) { toast(e.message, true); }
         } },
     ],
-    defaults: () => ({ category: S.cat, batch: S.tbatch || firstBatch(), affiliation: '金牌班內生', applicant_role: '家長', course_ids: [], meals: {} }),
+    defaults: () => ({ category: S.cat, batch: S.tbatch || firstBatch(), affiliation: '金牌班內生', course_ids: [], meals: {} }),
     prepare: async v => {
       await lookups(); await coursesOf(v.category || S.cat); await stuDefaults();
       if (v.name && !v.student_name) v.student_name = v.name;
@@ -1044,7 +1055,7 @@ const TABLES = {
           : { k: 'student_name', t: '學生姓名', req: true },
         { k: 'school', t: '學校', list: SCHOOLS, hint: v.affiliation === '金牌班內生' ? '和學生資料不同時，會送到「資料異動審核」等行政確認' : '' },
         { k: 'parent_phone', t: '家長手機', type: 'tel', hint: '09 開頭，共 10 碼' + (v.affiliation === '金牌班內生' ? '。和學生資料不同時，會送到「資料異動審核」' : '') },
-        { k: 'applicant_role', t: '填表人', type: 'radio', opts: ['家長', '學生'] },
+        isNew ? null : { t: '填表人', type: 'ro', val: roleOf(v) },
         { k: 'email', t: '登入 Email', type: 'email', hint: '家長用這個 Email 登入報名表，才看得到這筆報名' },
         { k: 'courses', t: '報名科目', type: 'courses', sel: v.course_ids || [],
           list: cs.map(c => ({ id: c.course_id, label: `${c.name}　${md(c.course_date)} ${c.start_time}–${c.end_time}` })) },
@@ -1065,7 +1076,7 @@ const TABLES = {
       registration_id: isNew ? null : row.registration_id, category: o.category || S.cat, batch: o.batch,
       affiliation: o.affiliation, student_id: o.affiliation === '金牌班內生' ? o.student_id : null,
       student_name: o.affiliation === '班外生' ? o.student_name : null, school: o.school, parent_phone: (o.parent_phone || '').replace(/\D/g, ''),
-      applicant_role: o.applicant_role, email: o.email, course_ids: o.course_ids, meals: o.meals, memo: o.memo } }),
+      applicant_role: null, email: o.email, course_ids: o.course_ids, meals: o.meals, memo: o.memo } }),
     onDelete: r => rpc('admin_delete_registration', { p_reg: r.registration_id }),
     deleteWarn: r => `確定永久刪除「${r.name}」這筆報名？選課、訂餐、座位、修改紀錄都會一起刪除（系統會自動備份一份）。`,
     actions: (row, isNew) => isNew ? [] : [
