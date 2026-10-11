@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>考猜後台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F6EEDC; --card:#FFFFFF; --navy:#1F2D4A; --gold:#C9A24B; --ink:#3A3F4B; --muted:#8A909B; --line:#ECE4D2;
+    --rose:#F7D6D9; --rose-ink:#B4505D; --mint:#D3EEDF; --mint-ink:#2F7A56; --lilac:#E4DCF5; --lilac-ink:#6B54A8;
+    --lemon:#FBF0C9; --lemon-ink:#8A6A12; --sky:#D6E8F7; --sky-ink:#3D6E9E; --grey:#F1EFE8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.5}
+  button{font:inherit;cursor:pointer}
+  input,select{font:inherit}
+  [hidden]{display:none!important}
+  .card{background:var(--card);border-radius:16px;padding:18px}
+  .center{max-width:420px;margin:12vh auto;padding:0 16px}
+  h1{font-size:22px;color:var(--navy);margin:0 0 6px}
+  h2{font-size:17px;color:var(--navy);margin:0 0 10px}
+  .muted{color:var(--muted);font-size:13px}
+  .in{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+  .in:focus{outline:none;border-color:var(--gold)}
+  .btn{border:0;border-radius:12px;padding:10px 14px;background:var(--navy);color:#fff;font-weight:700}
+  .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line);font-weight:500}
+  .btn.sm{padding:6px 10px;font-size:13px;border-radius:10px}
+  .btn.danger{background:var(--rose);color:var(--rose-ink)}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .msg{margin-top:12px;padding:10px 12px;border-radius:12px;font-size:14px}
+  .msg.err{background:var(--rose);color:var(--rose-ink)} .msg.ok{background:var(--mint);color:var(--mint-ink)} .msg.info{background:var(--lemon);color:var(--lemon-ink)}
+
+  /* shell */
+  .shell{display:grid;grid-template-columns:180px minmax(0,1fr);min-height:100vh}
+  nav{background:#fff;border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:0;height:100vh;overflow:auto}
+  nav .brand{font-weight:700;color:var(--navy);padding:4px 8px 12px}
+  nav .sec{font-size:12px;color:var(--muted);padding:10px 8px 4px}
+  nav a{display:block;padding:8px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px}
+  nav a.on{background:var(--sky);color:var(--sky-ink);font-weight:700}
+  nav a.soon{color:#B9B6AE;pointer-events:none}
+  main{padding:14px 18px 40px;min-width:0}
+  .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  .topbar select{padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+  .spacer{flex:1}
+  .switch{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer}
+  .dot{width:9px;height:9px;border-radius:50%;background:#C9C4B8}
+  .switch.on .dot{background:#3BA272}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .pill{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font-size:14px}
+  .pill.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px;margin:10px 0 14px}
+  .stat{background:#fff;border-radius:12px;padding:8px 10px}
+  .stat b{display:block;font-size:22px;color:var(--navy)}
+  .stat span{font-size:12px;color:var(--muted)}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+  .tools .in{width:200px;padding:7px 10px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:14px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{background:#FBF8F1;color:var(--muted);font-weight:500;font-size:13px;position:sticky;top:0}
+  tr.cx td{color:#B3AFA5}
+  tr.cx td.nm{text-decoration:line-through}
+  .tbl{overflow:auto;border-radius:12px;max-height:70vh}
+  .chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px}
+  .c-in{background:var(--sky);color:var(--sky-ink)} .c-out{background:var(--lemon);color:var(--lemon-ink)}
+  .c-cx{background:var(--rose);color:var(--rose-ink)}
+  .att{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .att button{border:0;background:#fff;padding:6px 12px;font-size:14px;min-width:52px}
+  .att button+button{border-left:1.5px solid var(--line)}
+  .att .y.on{background:var(--mint);color:var(--mint-ink);font-weight:700}
+  .att .n.on{background:var(--rose);color:var(--rose-ink);font-weight:700}
+  .att .u.on{background:var(--grey);color:var(--ink);font-weight:700}
+  .meal{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff}
+  .toast{position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:12px;background:var(--navy);color:#fff;font-size:14px;z-index:50;max-width:360px}
+  .toast.err{background:var(--rose-ink)}
+  /* meals */
+  .mealgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .mealday h3{margin:0 0 8px;font-size:15px;color:var(--navy)}
+  .mealday ul{margin:0;padding-left:18px;font-size:14px;columns:2}
+  /* seats */
+  .seatwrap{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:14px;user-select:none;-webkit-user-select:none}
+  .seatgrid{display:grid;gap:5px;background:#fff;border-radius:16px;padding:14px;align-content:start;touch-action:none}
+  .seat{min-height:44px;border:1.5px dashed #E2DCCD;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:2px}
+  .seat.aisle{border:0}
+  .seat.door{border:0;color:var(--muted);font-size:12px}
+  .seat.hover,.unlist.hover{background:var(--sky);border-style:solid;border-color:var(--sky-ink)}
+  .sc{cursor:grab;width:100%;text-align:center;font-size:13px;padding:6px 4px;border-radius:8px;background:var(--mint);color:var(--mint-ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;touch-action:none}
+  .sc.out{background:var(--lemon);color:var(--lemon-ink)}
+  .sc.cx{background:var(--grey);color:#A9A59B;text-decoration:line-through}
+  .unlist{background:#fff;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:5px;min-height:300px;border:1.5px solid transparent}
+  .unlist .sc{background:var(--lilac);color:var(--lilac-ink)}
+  .dragghost{position:fixed;pointer-events:none;z-index:60;width:84px;opacity:.92;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .panel{background:#fff;border-radius:16px;padding:14px;margin-top:12px;border:1.5px solid var(--line)}
+  .names{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px 10px;margin:10px 0;font-size:14px}
+  @media print{
+    nav,.topbar,.tools,.unlist,.noprint,.panel{display:none!important}
+    .shell{display:block} main{padding:0} body{background:#fff}
+    .seatwrap{display:block} .seat{border-color:#999}
+    @page{size:landscape;margin:10mm}
+  }
+  @media (max-width:820px){ .shell{grid-template-columns:1fr} nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px} nav .sec,nav .brand{display:none} .seatwrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<!-- 登入 -->
+<div class="center" id="login" hidden>
+  <div class="card">
+    <h1>考猜後台</h1>
+    <p class="muted">老師、行政請用登記在系統裡的 Email 登入。</p>
+    <form id="emailForm">
+      <input class="in" type="email" id="email" placeholder="teacher@gmail.com" required autocomplete="email">
+      <button class="btn" style="width:100%;margin-top:10px" id="sendBtn">寄送驗證信</button>
+    </form>
+    <form id="codeForm" hidden>
+      <input class="in" id="code" inputmode="numeric" maxlength="6" placeholder="6 位數驗證碼" autocomplete="one-time-code">
+      <button class="btn" style="width:100%;margin-top:10px">登入</button>
+      <button type="button" class="btn ghost sm" style="margin-top:8px" id="resend">換一個 Email</button>
+    </form>
+    <div class="msg" id="loginMsg" hidden></div>
+  </div>
+</div>
+
+<!-- 沒有權限 -->
+<div class="center" id="denied" hidden>
+  <div class="card">
+    <h1>沒有後台權限</h1>
+    <p><b id="deniedEmail"></b> 不在老師／行政名單中。請請管理者把這個 Email 加到老師資料裡。</p>
+    <button class="btn ghost" id="logout2">登出</button>
+  </div>
+</div>
+
+<!-- 後台 -->
+<div class="shell" id="app" hidden>
+  <nav>
+    <div class="brand">考猜後台</div>
+    <div class="sec">當天用</div>
+    <a href="#roll" data-page="roll">點名表／訂餐</a>
+    <a href="#seats" data-page="seats">座位表</a>
+    <div class="sec">報名（第 2 階段）</div>
+    <a class="soon">報名總表</a><a class="soon">加退選紀錄</a>
+    <div class="sec">行政（第 3 階段）</div>
+    <a class="soon">學生名單</a><a class="soon">課程設定</a><a class="soon">出席與學費</a><a class="soon">會考成績</a>
+    <div class="sec">帳號</div>
+    <a href="#" id="logout">登出 <span class="muted" id="who"></span></a>
+  </nav>
+  <main>
+    <div class="topbar">
+      <select id="cat"></select>
+      <select id="batch"></select>
+      <span class="switch" id="regOpen"><span class="dot"></span><span>報名開放中</span></span>
+      <span class="spacer"></span>
+      <span class="muted">最後更新 <span id="updated">—</span></span>
+      <button class="btn ghost sm" id="refresh">重新整理</button>
+    </div>
+
+    <!-- 點名表 -->
+    <section id="page-roll" hidden>
+      <div class="pills" id="courseTabs"></div>
+      <div id="rollView">
+        <div class="muted" id="courseInfo"></div>
+        <div class="stats" id="stats"></div>
+        <div class="tools">
+          <input class="in" id="search" placeholder="搜尋姓名、學校">
+          <label class="muted"><input type="checkbox" id="showCx"> 顯示已取消</label>
+          <span class="spacer"></span>
+          <button class="btn ghost sm" id="copyNames">複製姓名</button>
+          <button class="btn ghost sm" id="csv">匯出 CSV</button>
+        </div>
+        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>出席</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+      </div>
+      <div id="mealView" hidden>
+        <div class="stats" id="mealStats"></div>
+        <div class="tools"><button class="btn ghost sm" id="copyMeal">複製訂餐摘要</button></div>
+        <div class="mealgrid" id="mealLists"></div>
+      </div>
+    </section>
+
+    <!-- 座位表 -->
+    <section id="page-seats" hidden>
+      <div class="pills" id="seatTabs"></div>
+      <div class="tools noprint">
+        <span class="muted" id="seatInfo"></span>
+        <span class="spacer"></span>
+        <select id="copyFrom" class="meal"><option value="">從其他科複製座位…</option></select>
+        <button class="btn ghost sm" id="batchBtn">批次移回未排</button>
+        <button class="btn ghost sm" onclick="print()">列印</button>
+      </div>
+      <p class="muted noprint" style="margin:0 0 8px">拖名字到座位排座；拖到別人座位＝交換；拖回右邊名單＝取消座位；在座位區按兩下＝批次勾選移回。</p>
+      <div class="seatwrap">
+        <div class="seatgrid" id="seatgrid"></div>
+        <div><div class="muted" style="margin-bottom:6px">未排座位 <b id="unCount"></b></div><div class="unlist" id="unlist"></div></div>
+      </div>
+      <div class="panel" id="panel" hidden>
+        <div style="display:flex;align-items:center;gap:8px"><b>勾選要移回未排名單的人</b><span class="spacer"></span>
+          <button class="btn ghost sm" id="pAll">全選</button><button class="btn ghost sm" id="pClose">關閉</button></div>
+        <div class="names" id="pNames"></div>
+        <button class="btn" id="pGo">移回未排名單</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SUPABASE_URL = 'https://ixdowmddybxdesgdgecp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fjpfXR09MR3U9dTB4u2HAg_Heiy-W5s';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const WEEK = '日一二三四五六';
+const md = d => { const x = new Date(d + 'T00:00'); return `${x.getMonth() + 1}/${x.getDate()}（${WEEK[x.getDay()]}）`; };
+const hm = t => String(t || '').slice(0, 5);
+function toast(t, err) { const el = $('toast'); el.textContent = t; el.className = 'toast' + (err ? ' err' : ''); el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, err ? 5000 : 2200); }
+async function rpc(fn, args) {
+  const { data, error } = await sb.rpc(fn, args);
+  if (error) {
+    if (/Could not find the function|does not exist/i.test(error.message) && fn === 'admin_unseat')
+      throw new Error('「移回未排」功能尚未啟用，請先在 Supabase 執行「啟用刪除功能.sql」');
+    throw new Error(error.message);
+  }
+  return data;
+}
+
+/* ===== 登入 ===== */
+let pendingEmail = '';
+$('emailForm').onsubmit = async e => {
+  e.preventDefault();
+  pendingEmail = $('email').value.trim().toLowerCase();
+  $('sendBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email: pendingEmail, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
+  $('sendBtn').disabled = false;
+  const m = $('loginMsg'); m.hidden = false;
+  if (error) { m.className = 'msg err'; m.textContent = '寄送失敗：' + error.message; return; }
+  m.className = 'msg info'; m.textContent = `驗證信已寄到 ${pendingEmail}`;
+  $('emailForm').hidden = true; $('codeForm').hidden = false;
+};
+$('codeForm').onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token: $('code').value.trim(), type: 'email' });
+  if (error) { const m = $('loginMsg'); m.className = 'msg err'; m.textContent = '驗證碼不正確或已過期'; }
+};
+$('resend').onclick = () => { $('codeForm').hidden = true; $('emailForm').hidden = false; $('loginMsg').hidden = true; };
+$('logout').onclick = e => { e.preventDefault(); sb.auth.signOut(); };
+$('logout2').onclick = () => sb.auth.signOut();
+
+async function onSession(session) {
+  ['login', 'denied', 'app'].forEach(id => $(id).hidden = true);
+  if (!session) { $('login').hidden = false; return; }
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname);
+  const me = await rpc('admin_me').catch(() => null);
+  if (!me || !me.is_staff) { $('deniedEmail').textContent = session.user.email; $('denied').hidden = false; return; }
+  $('who').textContent = me.name || '';
+  $('app').hidden = false;
+  await loadBootstrap();
+  route();
+}
+
+/* ===== 活動／場次 ===== */
+let CATS = [], S = { cat: null, batch: null, page: 'roll', course: null, seatCourse: null, showCx: false, q: '' };
+async function loadBootstrap() {
+  const b = await rpc('admin_bootstrap');
+  CATS = b.categories;
+  $('cat').innerHTML = CATS.map(c => `<option>${esc(c.category)}</option>`).join('');
+  S.cat = S.cat || CATS[0]?.category;
+  $('cat').value = S.cat;
+  fillBatches();
+}
+function fillBatches() {
+  const c = CATS.find(x => x.category === S.cat);
+  const bs = (c?.batches || []).slice().sort();
+  $('batch').innerHTML = bs.map(b => `<option>${esc(b)}</option>`).join('');
+  if (!bs.includes(S.batch)) S.batch = bs[0];
+  $('batch').value = S.batch;
+  $('regOpen').classList.toggle('on', !!c?.reg_open);
+  $('regOpen').querySelector('span:last-child').textContent = c?.reg_open ? '報名開放中' : '報名已關閉';
+}
+$('cat').onchange = () => { S.cat = $('cat').value; S.course = S.seatCourse = null; fillBatches(); reload(); };
+$('batch').onchange = () => { S.batch = $('batch').value; S.course = S.seatCourse = null; reload(); };
+$('regOpen').onclick = async () => {
+  const c = CATS.find(x => x.category === S.cat); if (!c) return;
+  if (!confirm(c.reg_open ? '要關閉報名嗎？家長將無法再報名或修改。' : '要開放報名嗎？')) return;
+  try { await rpc('admin_set_reg_open', { p_category: c.category, p_open: !c.reg_open }); c.reg_open = !c.reg_open; fillBatches(); toast(c.reg_open ? '已開放報名' : '已關閉報名'); }
+  catch (e) { toast(e.message, true); }
+};
+$('refresh').onclick = () => reload();
+
+/* ===== 路由 ===== */
+function route() {
+  S.page = (location.hash.replace('#', '') || 'roll');
+  if (!['roll', 'seats'].includes(S.page)) S.page = 'roll';
+  document.querySelectorAll('nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === S.page));
+  $('page-roll').hidden = S.page !== 'roll';
+  $('page-seats').hidden = S.page !== 'seats';
+  reload();
+}
+window.addEventListener('hashchange', route);
+let busy = false;
+async function reload() {
+  if (busy) return;
+  try {
+    if (S.page === 'roll') await loadBoard(); else await loadBoardThenSeats();
+    $('updated').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+  } catch (e) { toast(e.message, true); }
+}
+setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && $('panel').hidden) reload(); }, 15000);
+
+/* ===== 點名表 ===== */
+let BOARD = null;
+async function loadBoard() {
+  BOARD = await rpc('admin_board', { p_category: S.cat, p_batch: S.batch });
+  if (!S.course) S.course = BOARD.courses[0]?.course_id || 'meal';
+  renderTabs(); renderRoll();
+}
+function renderTabs() {
+  $('courseTabs').innerHTML = BOARD.courses.map(c =>
+    `<button class="pill ${S.course === c.course_id ? 'on' : ''}" data-c="${c.course_id}">${esc(c.course_name)} <span class="muted">${c.enrolled}</span></button>`).join('') +
+    `<button class="pill ${S.course === 'meal' ? 'on' : ''}" data-c="meal">訂餐</button>`;
+}
+$('courseTabs').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.course = b.dataset.c; renderTabs(); renderRoll(); };
+$('search').oninput = () => { S.q = $('search').value.trim(); renderRoll(); };
+$('showCx').onchange = () => { S.showCx = $('showCx').checked; renderRoll(); };
+
+function lunchEligible(regId, date) {
+  const rs = BOARD.roster.filter(r => r.registration_id === regId && r.course_date === date && r.status === '報名中');
+  return rs.some(r => hm(r.end_time) <= '12:30') && rs.some(r => hm(r.start_time) >= '12:30' && hm(r.start_time) < '14:00');
+}
+function currentRows() {
+  let rows = BOARD.roster.filter(r => r.course_id === S.course);
+  if (!S.showCx) rows = rows.filter(r => r.status === '報名中');
+  if (S.q) rows = rows.filter(r => (r.name + (r.school || '')).includes(S.q));
+  return rows.sort((a, b) => (a.status === b.status ? a.name.localeCompare(b.name, 'zh-Hant') : a.status === '報名中' ? -1 : 1));
+}
+function renderRoll() {
+  const isMeal = S.course === 'meal';
+  $('rollView').hidden = isMeal; $('mealView').hidden = !isMeal;
+  if (isMeal) return renderMeals();
+  const c = BOARD.courses.find(x => x.course_id === S.course);
+  if (!c) { $('rows').innerHTML = ''; return; }
+  $('courseInfo').textContent = `${md(c.course_date)} ${hm(c.start_time)}–${hm(c.end_time)}${c.teacher_name ? '・' + c.teacher_name + ' 老師' : ''}`;
+  const st = [['報名', c.enrolled], ['班內', c.inside], ['班外', c.outside], ['已出席', c.attended], ['缺席', c.absent], ['未點名', c.unmarked], ['已排座', c.seated]];
+  $('stats').innerHTML = st.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+  const rows = currentRows();
+  $('rows').innerHTML = rows.map((r, i) => {
+    const cx = r.status === '已取消';
+    const elig = lunchEligible(r.registration_id, r.course_date);
+    const meal = elig && !cx
+      ? `<select class="meal" data-meal="${r.registration_id}" data-date="${r.course_date}">${['葷食', '素食', '不訂餐'].map(m => `<option ${r.meal === m ? 'selected' : ''}>${m}</option>`).join('')}</select>`
+      : `<span class="muted">${cx ? '—' : '未跨中午'}</span>`;
+    const att = cx ? '<span class="chip c-cx">已取消</span>' :
+      `<span class="att" data-item="${r.item_id}">
+        <button class="u ${r.attended === null ? 'on' : ''}" data-v="null">未點</button>
+        <button class="y ${r.attended === true ? 'on' : ''}" data-v="true">出席</button>
+        <button class="n ${r.attended === false ? 'on' : ''}" data-v="false">缺席</button></span>`;
+    return `<tr class="${cx ? 'cx' : ''}"><td>${i + 1}</td><td class="nm"><b>${esc(r.name)}</b></td>
+      <td><span class="chip ${r.affiliation === '班外生' ? 'c-out' : 'c-in'}">${r.affiliation === '班外生' ? '班外' : '班內'}</span></td>
+      <td>${esc(r.school || '')}</td><td>${esc(r.parent_phone || '')}</td><td>${meal}</td><td>${att}</td>
+      <td>${cx ? '' : `<input type="checkbox" data-hand="${r.item_id}" ${r.handout_given ? 'checked' : ''}>`}</td>
+      <td>${cx ? `<button class="btn ghost sm" data-add="${r.item_id}">加回</button>` : `<button class="btn ghost sm" data-drop="${r.item_id}" data-name="${esc(r.name)}">退選</button>`}</td></tr>`;
+  }).join('') || '<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">沒有資料</td></tr>';
+}
+$('rows').onclick = async e => {
+  const a = e.target.closest('.att button');
+  if (a) {
+    const item = a.parentElement.dataset.item, v = a.dataset.v === 'null' ? null : a.dataset.v === 'true';
+    const r = BOARD.roster.find(x => x.item_id === item); const old = r.attended;
+    r.attended = v; renderRoll();
+    try { await rpc('admin_set_attendance', { p_item: item, p_attended: v }); bumpCounts(); }
+    catch (err) { r.attended = old; renderRoll(); toast(err.message, true); }
+    return;
+  }
+  const d = e.target.closest('[data-drop]'), ad = e.target.closest('[data-add]');
+  if (d && confirm(`確定讓 ${d.dataset.name} 退選這一科？`)) {
+    try { await rpc('admin_set_item_status', { p_item: d.dataset.drop, p_status: '已取消' }); toast('已退選'); await loadBoard(); } catch (err) { toast(err.message, true); }
+  }
+  if (ad) { try { await rpc('admin_set_item_status', { p_item: ad.dataset.add, p_status: '報名中' }); toast('已加回'); await loadBoard(); } catch (err) { toast(err.message, true); } }
+};
+$('rows').onchange = async e => {
+  const h = e.target.closest('[data-hand]'), m = e.target.closest('[data-meal]');
+  try {
+    if (h) { await rpc('admin_set_handout', { p_item: h.dataset.hand, p_given: h.checked }); toast(h.checked ? '講義已領' : '已取消勾選'); }
+    if (m) { await rpc('admin_set_meal', { p_reg: m.dataset.meal, p_date: m.dataset.date, p_meal: m.value }); toast('餐點已更新'); await loadBoard(); }
+  } catch (err) { toast(err.message, true); await loadBoard(); }
+};
+function bumpCounts() {
+  const c = BOARD.courses.find(x => x.course_id === S.course);
+  const rs = BOARD.roster.filter(r => r.course_id === S.course && r.status === '報名中');
+  c.attended = rs.filter(r => r.attended === true).length; c.absent = rs.filter(r => r.attended === false).length; c.unmarked = rs.filter(r => r.attended === null).length;
+  renderRoll();
+}
+$('copyNames').onclick = () => navigator.clipboard.writeText(currentRows().filter(r => r.status === '報名中').map(r => r.name).join('、')).then(() => toast('已複製姓名'));
+$('csv').onclick = () => {
+  const c = BOARD.courses.find(x => x.course_id === S.course);
+  const rows = currentRows();
+  const head = ['序號', '姓名', '班別', '學校', '家長電話', '當天中餐', '出席', '講義', '狀態'];
+  const lines = rows.map((r, i) => [i + 1, r.name, r.affiliation, r.school, r.parent_phone, r.meal, r.attended === null ? '' : r.attended ? 'Y' : 'N', r.handout_given ? 'Y' : '', r.status]);
+  const csv = '﻿' + [head, ...lines].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `點名表_${c?.course_name || ''}_${S.batch}.csv`; a.click();
+};
+function renderMeals() {
+  $('mealStats').innerHTML = BOARD.meal_counts.map(m =>
+    `<div class="stat"><b>${m.meat}／${m.veg}</b><span>${md(m.course_date)} 葷／素（共 ${m.total}）</span></div>`).join('');
+  $('mealLists').innerHTML = BOARD.meal_counts.map(m => {
+    const list = BOARD.meal_list.filter(x => x.course_date === m.course_date);
+    const g = k => list.filter(x => x.meal === k).map(x => `<li>${esc(x.name)}${x.affiliation === '班外生' ? ' <span class="chip c-out">班外</span>' : ''}</li>`).join('');
+    return `<div class="card mealday"><h3>${md(m.course_date)}</h3>
+      <div class="muted">葷食 ${m.meat} 份</div><ul>${g('葷食') || '<li class="muted">無</li>'}</ul>
+      <div class="muted" style="margin-top:8px">素食 ${m.veg} 份</div><ul>${g('素食') || '<li class="muted">無</li>'}</ul></div>`;
+  }).join('');
+}
+$('copyMeal').onclick = () => navigator.clipboard.writeText(BOARD.meal_counts.map(m => `${md(m.course_date)} 葷食 ${m.meat} 份、素食 ${m.veg} 份`).join('\n')).then(() => toast('已複製訂餐摘要'));
+
+/* ===== 座位表 ===== */
+let SEAT = null, dragging = false;
+async function loadBoardThenSeats() {
+  if (!BOARD || BOARD._key !== S.cat + S.batch) { BOARD = await rpc('admin_board', { p_category: S.cat, p_batch: S.batch }); BOARD._key = S.cat + S.batch; }
+  if (!S.seatCourse || !BOARD.courses.some(c => c.course_id === S.seatCourse)) S.seatCourse = BOARD.courses[0]?.course_id;
+  $('seatTabs').innerHTML = BOARD.courses.map(c => `<button class="pill ${S.seatCourse === c.course_id ? 'on' : ''}" data-c="${c.course_id}">${esc(c.course_name)}</button>`).join('');
+  if (!S.seatCourse) { $('seatgrid').innerHTML = ''; return; }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse });
+  renderSeats();
+}
+$('seatTabs').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.seatCourse = b.dataset.c; $('panel').hidden = true; loadBoardThenSeats(); };
+function personAt(r, c) { return SEAT.people.find(p => p.row === r && p.col === c); }
+function chipHtml(p) {
+  const cls = p.status === '已取消' ? 'cx' : p.affiliation === '班外生' ? 'out' : '';
+  return `<div class="sc ${cls}" data-item="${p.item_id}" title="${esc(p.name)}${p.status === '已取消' ? '（已取消報名）' : ''}${p.school ? '・' + esc(p.school) : ''}">${esc(p.name)}</div>`;
+}
+function renderSeats() {
+  const L = SEAT.layout, aisles = (L.aisles || []).map(Number);
+  const c = SEAT.course;
+  $('seatInfo').textContent = `${c.name}・${md(c.date)} ${c.start}–${c.end}${L.classroom ? '・' + L.classroom : ''}`;
+  $('seatgrid').style.gridTemplateColumns = Array.from({ length: L.cols }, (_, i) => aisles.includes(i + 1) ? '18px' : 'minmax(0,1fr)').join(' ');
+  let h = '';
+  for (let r = 1; r <= L.rows; r++) for (let col = 1; col <= L.cols; col++) {
+    if (aisles.includes(col)) { h += '<div class="seat aisle"></div>'; continue; }
+    if (col === 1 && r === 1 && L.door) { h += `<div class="seat door">${esc(L.door)}</div>`; continue; }
+    const p = personAt(r, col);
+    h += `<div class="seat" data-r="${r}" data-c="${col}">${p ? chipHtml(p) : ''}</div>`;
+  }
+  $('seatgrid').innerHTML = h;
+  const un = SEAT.people.filter(p => !p.seat_id && p.status === '報名中');
+  $('unlist').innerHTML = un.map(chipHtml).join('') || '<div class="muted">全部都排好了</div>';
+  $('unCount').textContent = `${un.length} 人`;
+  $('copyFrom').innerHTML = '<option value="">從其他科複製座位…</option>' + SEAT.other_courses.map(o => `<option value="${o.course_id}">從「${esc(o.name)}」複製</option>`).join('');
+}
+// 拖拉（滑鼠＋觸控）
+let dragItem = null, ghost = null, over = null, startXY = null;
+document.addEventListener('pointerdown', e => {
+  const ch = e.target.closest('#page-seats .sc'); if (!ch || e.button > 0) return;
+  dragItem = ch.dataset.item; startXY = [e.clientX, e.clientY]; e.preventDefault();
+});
+document.addEventListener('pointermove', e => {
+  if (!dragItem) return;
+  if (!dragging) {
+    if (Math.hypot(e.clientX - startXY[0], e.clientY - startXY[1]) < 6) return;
+    dragging = true;
+    const src = document.querySelector(`#page-seats .sc[data-item="${dragItem}"]`);
+    ghost = src.cloneNode(true); ghost.classList.add('dragghost'); document.body.appendChild(ghost);
+  }
+  ghost.style.left = (e.clientX - 42) + 'px'; ghost.style.top = (e.clientY - 16) + 'px';
+  over && over.classList.remove('hover');
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  over = el && (el.closest('.seat[data-r]') || el.closest('#unlist'));
+  over && over.classList.add('hover');
+});
+document.addEventListener('pointerup', async () => {
+  if (!dragItem) return;
+  const item = dragItem, target = over; dragItem = null;
+  if (!dragging) return;
+  dragging = false; ghost && ghost.remove(); ghost = null; target && target.classList.remove('hover'); over = null;
+  if (!target) return;
+  const p = SEAT.people.find(x => x.item_id === item);
+  try {
+    if (target.id === 'unlist') {
+      if (!p.seat_id) return;
+      await rpc('admin_unseat', { p_seat_ids: [p.seat_id] }); toast(`${p.name} 移回未排名單`);
+    } else {
+      const r = +target.dataset.r, c = +target.dataset.c, o = personAt(r, c);
+      if (o && o.item_id !== item && !p.seat_id) {
+        if (!confirm(`這個座位是 ${o.name}，要把他移回未排名單、換成 ${p.name} 嗎？`)) return;
+        await rpc('admin_unseat', { p_seat_ids: [o.seat_id] });
+      }
+      const msg = await rpc('admin_place_seat', { p_course: S.seatCourse, p_item: item, p_row: r, p_col: c });
+      toast(`${p.name}：${msg}`);
+    }
+  } catch (err) { toast(err.message, true); }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
+});
+// 雙擊座位區 → 批次移回
+function openPanel() {
+  const seated = SEAT.people.filter(p => p.seat_id).sort((a, b) => a.row - b.row || a.col - b.col);
+  $('pNames').innerHTML = seated.map(p => `<label><input type="checkbox" value="${p.seat_id}"> ${esc(p.name)}${p.status === '已取消' ? ' <span class="chip c-cx">已取消</span>' : ''}</label>`).join('') || '<span class="muted">目前沒有人排座</span>';
+  $('panel').hidden = false; $('panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+$('seatgrid').addEventListener('dblclick', openPanel);
+$('batchBtn').onclick = openPanel;
+$('pClose').onclick = () => $('panel').hidden = true;
+$('pAll').onclick = () => { const b = [...$('pNames').querySelectorAll('input')]; const on = b.every(x => x.checked); b.forEach(x => x.checked = !on); };
+$('pGo').onclick = async () => {
+  const ids = [...$('pNames').querySelectorAll('input:checked')].map(x => x.value);
+  if (!ids.length) return toast('請先勾選要移回的人', true);
+  try { const n = await rpc('admin_unseat', { p_seat_ids: ids }); toast(`${n} 人移回未排名單`); $('panel').hidden = true; }
+  catch (err) { toast(err.message, true); }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
+};
+$('copyFrom').onchange = async () => {
+  const src = $('copyFrom').value; if (!src) return;
+  try { const n = await rpc('admin_copy_seats', { p_target: S.seatCourse, p_source: src }); toast(`已複製 ${n} 人的座位`); }
+  catch (err) { toast(err.message, true); }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
+};
+
+/* ===== 啟動 ===== */
+let lastUser;
+sb.auth.onAuthStateChange((_e, session) => {
+  const u = session?.user?.id || null;
+  if (u === lastUser) return; lastUser = u;
+  setTimeout(() => onSession(session), 0);
+});
+</script>
+</body>
+</html>

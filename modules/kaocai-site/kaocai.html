@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>考前猜題報名</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F6EEDC; --card:#FFFFFF; --navy:#1F2D4A; --gold:#C9A24B; --ink:#3A3F4B; --muted:#8A909B; --line:#ECE4D2;
+    --rose:#F7D6D9; --rose-ink:#B4505D; --mint:#D3EEDF; --mint-ink:#2F7A56; --lemon:#FBF0C9;
+    --sky:#D6E8F7; --sky-ink:#3D6E9E; --title:var(--navy); --btn-ink:#fff;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#2A2621; --card:#1E1E1E; --title:#F3EAD7; --gold:#D9B866; --ink:#E6E1D8; --muted:#9A948B; --line:#3A352E;
+    --rose:#4A2E33; --rose-ink:#F0B4BC; --mint:#263F33; --mint-ink:#9FDCBC; --lemon:#4A4127;
+    --sky:#26364A; --sky-ink:#A9CCEE; --navy:#D9B866; --btn-ink:#1E1E1E; } }
+  :root[data-theme="dark"]{
+    --bg:#2A2621; --card:#1E1E1E; --title:#F3EAD7; --gold:#D9B866; --ink:#E6E1D8; --muted:#9A948B; --line:#3A352E;
+    --rose:#4A2E33; --rose-ink:#F0B4BC; --mint:#263F33; --mint-ink:#9FDCBC; --lemon:#4A4127;
+    --sky:#26364A; --sky-ink:#A9CCEE; --navy:#D9B866; --btn-ink:#1E1E1E; }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg)}
+  body{font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;color:var(--ink);line-height:1.6}
+  .wrap{max-width:560px;margin:0 auto;padding:24px 16px 48px}
+  header{text-align:center;margin-bottom:18px}
+  .pill{display:inline-block;padding:4px 14px;border-radius:999px;background:var(--lemon);color:var(--title);font-weight:700;font-size:13px;letter-spacing:1px}
+  h1{margin:10px 0 4px;font-size:26px;color:var(--title)}
+  .loc{font-size:13px;color:var(--muted)}
+  .card{background:var(--card);border-radius:20px;padding:20px;box-shadow:0 1px 0 var(--line)}
+  .card+.card{margin-top:14px}
+  h2{margin:0 0 12px;font-size:17px;color:var(--title)}
+  label.f{display:block;margin:14px 0 6px;font-weight:500;font-size:14px}
+  label.f small{color:var(--muted);font-weight:400}
+  input[type=text],input[type=email],textarea{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:transparent;color:var(--ink)}
+  input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+  textarea{min-height:60px;resize:vertical}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{position:relative}
+  .chip input{position:absolute;opacity:0;pointer-events:none}
+  .chip span{display:inline-block;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);cursor:pointer;font-size:14px;user-select:none}
+  .chip input:checked+span{background:var(--sky);color:var(--sky-ink);border-color:transparent;font-weight:700}
+  .chip input:focus-visible+span{outline:2px solid var(--gold)}
+  .subjects{display:grid;gap:8px}
+  .subj{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--line);cursor:pointer}
+  .subj input{width:20px;height:20px;accent-color:var(--navy);flex:none}
+  .subj b{font-size:16px;min-width:2.5em}
+  .subj .t{font-size:13px;color:var(--muted)}
+  .subj:has(input:checked){background:var(--mint);border-color:transparent}
+  .subj:has(input:checked) .t{color:var(--mint-ink)}
+  .day{font-size:12px;font-weight:700;color:var(--gold);margin:8px 0 2px;letter-spacing:1px}
+  .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .link{border:0;background:none;color:var(--sky-ink);font:inherit;font-size:13px;cursor:pointer;padding:0}
+  .btn{display:block;width:100%;margin-top:18px;padding:13px;border:0;border-radius:14px;background:var(--navy);color:var(--btn-ink);font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .btn.ghost{background:transparent;color:var(--navy);border:1.5px solid var(--line)}
+  .btn.danger{background:var(--rose);color:var(--rose-ink)}
+  .btn.small{display:inline-block;width:auto;margin:0;padding:8px 14px;font-size:14px}
+  .msg{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:14px;white-space:pre-line}
+  .msg.ok{background:var(--mint);color:var(--mint-ink)}
+  .msg.err{background:var(--rose);color:var(--rose-ink)}
+  .msg.info{background:var(--lemon);color:var(--title)}
+  .reg{padding:14px;border-radius:16px;background:var(--lemon);margin-top:10px}
+  .reg.cancel{background:var(--line);color:var(--muted)}
+  .reg h3{margin:0;font-size:16px;color:var(--title)}
+  .reg ul{margin:6px 0 10px;padding-left:18px}
+  .reg .meta{font-size:13px;color:var(--muted)}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--mint);color:var(--mint-ink);margin-left:6px}
+  .reg.cancel .badge{background:var(--rose);color:var(--rose-ink)}
+  .actions{display:flex;gap:8px}
+  .results{border:1.5px solid var(--line);border-radius:12px;margin-top:6px;overflow:hidden}
+  .results button{display:flex;justify-content:space-between;width:100%;padding:10px 12px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+  .results button:first-child{border-top:0}
+  .results button:hover{background:var(--sky)}
+  .results small{color:var(--muted)}
+  .picked{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:12px;background:var(--mint);color:var(--mint-ink);font-weight:700}
+  .note{font-size:12px;color:var(--muted);margin-top:10px}
+  .mealdays{display:grid;gap:8px}
+  .mealday{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mealday b{min-width:5.5em;font-size:14px;color:var(--title)}
+  .who{font-size:13px;color:var(--muted);text-align:center;margin:-6px 0 14px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="pill">會考衝刺</span>
+    <h1 id="title">考前猜題報名</h1>
+    <div class="loc" id="loc">載入中…</div>
+  </header>
+
+  <!-- ===== 1. Email 登入 ===== -->
+  <section class="card" id="login" hidden>
+    <h2>用 Email 登入</h2>
+    <p style="margin:0;font-size:14px">報名資料會綁定這個 Email，之後查詢、修改報名都要用同一個 Email 登入。</p>
+    <form id="emailForm">
+      <label class="f" for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" required placeholder="例：parent@gmail.com">
+      <button class="btn" id="sendBtn" type="submit">寄送驗證信</button>
+    </form>
+    <form id="codeForm" hidden>
+      <label class="f" for="code">輸入信中的 6 位數驗證碼 <small>（或直接點信中的登入連結）</small></label>
+      <input type="text" id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <button class="btn" type="submit">登入</button>
+      <button class="link" type="button" id="resend" style="margin-top:10px">換一個 Email／重新寄送</button>
+    </form>
+    <div class="msg" id="loginMsg" hidden></div>
+  </section>
+
+  <!-- ===== 2. 我的報名 ===== -->
+  <div id="app" hidden>
+    <div class="who">已登入：<b id="whoEmail"></b>　<button class="link" id="logout">登出</button></div>
+
+    <section class="card" id="mine">
+      <h2>我的報名</h2>
+      <div id="mineList"><p class="note">還沒有報名資料。</p></div>
+      <button class="btn" id="newBtn">＋ 新增報名</button>
+    </section>
+
+    <!-- ===== 3. 報名表 ===== -->
+    <form id="reg" class="card" novalidate hidden>
+      <div class="row"><h2 id="formTitle" style="margin:0">報名表</h2><button type="button" class="link" id="closeForm">收起</button></div>
+
+      <label class="f">填表人身分</label>
+      <div class="chips" id="role">
+        <label class="chip"><input type="radio" name="role" value="家長" checked><span>家長</span></label>
+        <label class="chip"><input type="radio" name="role" value="學生"><span>學生</span></label>
+      </div>
+
+      <label class="f">班內／班外</label>
+      <div class="chips" id="aff">
+        <label class="chip"><input type="radio" name="aff" value="金牌班內生" checked><span>金牌班內生</span></label>
+        <label class="chip"><input type="radio" name="aff" value="班外生"><span>班外生</span></label>
+      </div>
+
+      <label class="f" for="sname">學生姓名 <small id="snameHint">（輸入 2 個字以上搜尋）</small></label>
+      <div id="pickedBox" class="picked" hidden><span id="pickedName"></span><button type="button" class="link" id="unpick">重選</button></div>
+      <input type="text" id="sname" maxlength="20" autocomplete="off">
+      <div class="results" id="results" hidden></div>
+      <button type="button" class="link" id="notFound" hidden style="margin-top:8px">找不到名字？直接用「<span id="typedName"></span>」報名</button>
+
+      <label class="f" for="phone">家長手機 <small>（上課提醒會傳到這支電話）</small></label>
+      <input type="text" id="phone" inputmode="numeric" maxlength="12" placeholder="09xxxxxxxx" autocomplete="tel">
+
+      <label class="f">學校</label>
+      <div class="chips" id="school">
+        <label class="chip"><input type="radio" name="school" value="照南國中"><span>照南國中</span></label>
+        <label class="chip"><input type="radio" name="school" value="君毅國中"><span>君毅國中</span></label>
+        <label class="chip"><input type="radio" name="school" value="竹南國中"><span>竹南國中</span></label>
+        <label class="chip"><input type="radio" name="school" value="大同國中"><span>大同國中</span></label>
+        <label class="chip"><input type="radio" name="school" value="其他"><span>其他</span></label>
+      </div>
+      <input type="text" id="schoolOther" maxlength="20" placeholder="請輸入學校名稱" hidden style="margin-top:8px">
+
+      <label class="f">報名場次</label>
+      <div class="chips" id="batches"></div>
+
+      <div class="row" style="margin-top:14px">
+        <span style="font-weight:500;font-size:14px">報名科目 <small style="color:var(--muted);font-weight:400">座位有限，請優先選擇全科</small></span>
+        <button type="button" class="link" id="all">全選</button>
+      </div>
+      <div class="subjects" id="subjects"></div>
+
+      <label class="f">中餐 <small>（每天分開選）</small></label>
+      <div id="meals" class="mealdays"></div>
+
+      <label class="f" for="memo">備註 <small>（選填）</small></label>
+      <textarea id="memo" maxlength="300"></textarea>
+
+      <button class="btn" id="submit" type="submit">送出報名</button>
+      <div class="msg" id="regMsg" hidden></div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ===== Supabase（publishable key 可放公開網頁；資料只能透過報名函式存取）===== */
+const SUPABASE_URL = 'https://ixdowmddybxdesgdgecp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fjpfXR09MR3U9dTB4u2HAg_Heiy-W5s';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const p = new URLSearchParams(location.search);
+if (p.get('theme') === 'dark' || p.get('theme') === 'light') document.documentElement.dataset.theme = p.get('theme');
+
+const $ = id => document.getElementById(id);
+const WEEK = '日一二三四五六';
+const md = d => { const x = new Date(d + 'T00:00'); return `${x.getMonth() + 1}/${x.getDate()}（${WEEK[x.getDay()]}）`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const val = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
+const setVal = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${CSS.escape(v)}"]`); if (el) el.checked = true; return !!el; };
+function show(el, text, kind = 'err') { el.hidden = false; el.className = 'msg ' + kind; el.textContent = text; }
+
+async function rpc(fn, args) {
+  const { data, error } = await sb.rpc(fn, args);
+  if (error) throw new Error(error.message || '系統忙碌，請稍後再試');
+  return data;
+}
+
+let CAT = null;          // 目前開放的活動
+let picked = null;       // 選到的班內生 {student_id, name}
+let editing = null;      // 正在修改的報名
+
+/* ---------- 活動選項（不需登入）---------- */
+async function loadOptions() {
+  const cats = await rpc('special_form_options');
+  if (!cats.length) { $('loc').textContent = '目前沒有開放報名的活動'; return false; }
+  CAT = cats[0];
+  $('title').textContent = CAT.category + ' 報名';
+  $('loc').textContent = '📍 ' + (CAT.location || '');
+  $('batches').innerHTML = CAT.batches.map((b, i) =>
+    `<label class="chip"><input type="radio" name="batch" value="${esc(b.batch)}" ${i === 0 ? 'checked' : ''}><span>${esc(b.batch)}</span></label>`).join('');
+  $('batches').onchange = () => renderCourses();
+  renderCourses();
+  return true;
+}
+function renderCourses(selected) {
+  const b = CAT.batches.find(x => x.batch === val('batch'));
+  let html = '', last = '';
+  for (const c of b.courses) {
+    if (c.date !== last) { html += `<div class="day">${md(c.date)}</div>`; last = c.date; }
+    const on = selected ? selected.includes(c.course_id) : true;
+    html += `<label class="subj"><input type="checkbox" value="${c.course_id}" ${on ? 'checked' : ''}><b>${esc(c.name)}</b>
+      <span class="t">${md(c.date)} ${c.start}–${c.end}${c.teacher ? '・' + esc(c.teacher) + ' 老師' : ''}</span></label>`;
+  }
+  $('subjects').innerHTML = html;
+  renderMeals();
+}
+/* 每天的中餐選項（依目前場次的上課日期） */
+let MEALS = {};
+function renderMeals() {
+  const b = CAT.batches.find(x => x.batch === val('batch'));
+  const days = [...new Set(b.courses.map(c => c.date))].sort();
+  $('meals').innerHTML = days.map(d => {
+    const cur = MEALS[d] || '葷食';
+    return `<div class="mealday"><b>${md(d)}</b><div class="chips">` +
+      ['葷食', '素食', '不訂餐'].map(m =>
+        `<label class="chip"><input type="radio" name="meal_${d}" value="${m}" ${cur === m ? 'checked' : ''}><span>${m}</span></label>`).join('') +
+      `</div></div>`;
+  }).join('');
+  $('meals').onchange = e => { const n = e.target.name; if (n && n.startsWith('meal_')) MEALS[n.slice(5)] = e.target.value; };
+}
+function collectMeals() {
+  const out = {};
+  document.querySelectorAll('#meals input:checked').forEach(x => out[x.name.slice(5)] = x.value);
+  return out;
+}
+$('all').onclick = () => {
+  const boxes = [...$('subjects').querySelectorAll('input')];
+  const allOn = boxes.every(x => x.checked);
+  boxes.forEach(x => x.checked = !allOn);
+};
+
+/* ---------- 登入 ---------- */
+let pendingEmail = '';
+$('emailForm').onsubmit = async e => {
+  e.preventDefault();
+  pendingEmail = $('email').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pendingEmail)) return show($('loginMsg'), '請輸入正確的 Email');
+  $('sendBtn').disabled = true;
+  const { error } = await sb.auth.signInWithOtp({ email: pendingEmail, options: { emailRedirectTo: location.origin + location.pathname } });
+  $('sendBtn').disabled = false;
+  if (error) return show($('loginMsg'), '寄送失敗：' + error.message);
+  $('emailForm').hidden = true; $('codeForm').hidden = false;
+  show($('loginMsg'), `驗證信已寄到 ${pendingEmail}，請到信箱收信（也看一下垃圾郵件）。`, 'info');
+  $('code').focus();
+};
+$('codeForm').onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await sb.auth.verifyOtp({ email: pendingEmail, token: $('code').value.trim(), type: 'email' });
+  if (error) return show($('loginMsg'), '驗證碼不正確或已過期，請重新寄送');
+};
+$('resend').onclick = () => { $('codeForm').hidden = true; $('emailForm').hidden = false; $('loginMsg').hidden = true; };
+$('logout').onclick = () => sb.auth.signOut();
+
+async function render(session) {
+  if (!session) { $('login').hidden = false; $('app').hidden = true; return; }
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname + location.search);
+  $('login').hidden = true; $('app').hidden = false;
+  $('whoEmail').textContent = session.user.email;
+  await loadMine();
+}
+
+/* ---------- 我的報名 ---------- */
+let MINE = [];
+async function loadMine() {
+  try { MINE = await rpc('special_my_registrations'); }
+  catch (e) { $('mineList').innerHTML = `<div class="msg err">${esc(e.message)}</div>`; return; }
+  if (!MINE.length) { $('mineList').innerHTML = '<p class="note">還沒有報名資料，按下方「新增報名」開始。</p>'; openForm(null); return; }
+  $('mineList').innerHTML = MINE.map((r, i) => {
+    const cancelled = r.status === '已取消';
+    const items = (r.courses || []).map(c => `<li>${md(c.date)} ${c.start}–${c.end} ${esc(c.name)}</li>`).join('');
+    return `<div class="reg ${cancelled ? 'cancel' : ''}">
+      <h3>${esc(r.student_name)} <span class="badge">${cancelled ? '已取消' : '已報名'}</span></h3>
+      <div class="meta">${esc(r.batch)} 場次・${esc(r.affiliation)}・${esc(r.school || '')}${r.parent_phone ? '・家長手機 ' + esc(r.parent_phone) : ''}</div>
+      <div class="meta">中餐：${(r.meals || []).map(m => `${md(m.date)} ${esc(m.meal)}`).join('、') || esc(r.meal)}</div>
+      ${items ? `<ul>${items}</ul>` : '<p class="meta">（沒有報名的科目）</p>'}
+      <div class="actions">
+        <button class="btn small" data-edit="${i}">${cancelled ? '重新報名' : '修改報名'}</button>
+        ${cancelled ? '' : `<button class="btn small danger" data-cancel="${i}">取消報名</button>`}
+      </div>
+      <div class="meta" style="margin-top:6px">最後更新：${new Date(r.updated_at).toLocaleString('zh-TW')}</div>
+    </div>`;
+  }).join('');
+}
+$('mineList').onclick = async e => {
+  const ed = e.target.closest('[data-edit]'), ca = e.target.closest('[data-cancel]');
+  if (ed) openForm(MINE[+ed.dataset.edit]);
+  if (ca) {
+    const r = MINE[+ca.dataset.cancel];
+    if (!confirm(`確定取消 ${r.student_name} 在 ${r.batch} 場次的全部報名嗎？`)) return;
+    ca.disabled = true;
+    try { await rpc('special_cancel', { p_registration_id: r.registration_id }); await loadMine(); }
+    catch (err) { alert(err.message); ca.disabled = false; }
+  }
+};
+$('newBtn').onclick = () => openForm(null);
+$('closeForm').onclick = () => { $('reg').hidden = true; };
+
+/* ---------- 報名表 ---------- */
+function setPicked(s) {
+  picked = s;
+  $('pickedBox').hidden = !s; $('sname').hidden = !!s;
+  $('results').hidden = true; $('notFound').hidden = true;
+  if (s) {
+    $('pickedName').textContent = s.name + (s.school ? `（${s.school}）` : '');
+    if (s.school && !val('school')) setSchool(s.school);
+  }
+}
+function setSchool(s) {
+  if (!s) { document.querySelectorAll('input[name=school]').forEach(x => x.checked = false); $('schoolOther').hidden = true; return; }
+  if (setVal('school', s)) { $('schoolOther').hidden = true; return; }
+  setVal('school', '其他'); $('schoolOther').hidden = false; $('schoolOther').value = s.replace(/^其他：/, '');
+}
+function syncAff() {
+  const inside = val('aff') === '金牌班內生';
+  $('snameHint').textContent = inside ? '（輸入 2 個字以上搜尋）' : '（請輸入學生全名）';
+  if (!inside) setPicked(null);
+  $('results').hidden = true; $('notFound').hidden = true;
+}
+$('aff').onchange = syncAff;
+$('school').onchange = () => { $('schoolOther').hidden = val('school') !== '其他'; };
+$('unpick').onclick = () => { setPicked(null); $('sname').value = ''; $('sname').focus(); };
+
+let searchTimer;
+$('sname').oninput = () => {
+  if (val('aff') !== '金牌班內生') return;
+  clearTimeout(searchTimer);
+  const q = $('sname').value.trim();
+  $('typedName').textContent = q;
+  if (q.length < 2) { $('results').hidden = true; $('notFound').hidden = true; return; }
+  searchTimer = setTimeout(async () => {
+    try {
+      const list = await rpc('special_student_search', { p_q: q });
+      $('results').innerHTML = list.map((s, i) =>
+        `<button type="button" data-i="${i}"><span>${esc(s.name)}</span><small>${esc(s.school || '')}</small></button>`).join('');
+      $('results').hidden = !list.length;
+      $('results').onclick = e => { const b = e.target.closest('button'); if (b) setPicked(list[+b.dataset.i]); };
+      $('notFound').hidden = false;
+    } catch (e) { /* 忽略搜尋錯誤 */ }
+  }, 250);
+};
+$('notFound').onclick = () => { $('results').hidden = true; $('notFound').hidden = true; };
+
+function openForm(r) {
+  editing = r;
+  $('reg').hidden = false; $('regMsg').hidden = true;
+  $('formTitle').textContent = r ? `修改報名：${r.student_name}` : '新增報名';
+  setVal('role', r?.applicant_role || '家長');
+  setVal('aff', r?.affiliation || '金牌班內生'); syncAff();
+  $('sname').value = r?.student_id ? '' : (r?.student_name || '');
+  setPicked(r?.student_id ? { student_id: r.student_id, name: r.student_name, school: r.school } : null);
+  setSchool(r?.school || null);
+  $('phone').value = r?.parent_phone || (MINE.find(x => x.parent_phone)?.parent_phone ?? '');
+  if (r && !setVal('batch', r.batch)) setVal('batch', CAT.batches[0].batch);
+  MEALS = {};
+  (r?.meals || []).forEach(m => MEALS[m.date] = m.meal);
+  renderCourses(r ? r.courses.map(c => c.course_id) : null);
+  $('memo').value = r?.memo || '';
+  $('reg').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('reg').onsubmit = async e => {
+  e.preventDefault();
+  const aff = val('aff');
+  const name = picked ? picked.name : $('sname').value.trim();
+  const school = val('school') === '其他' ? ($('schoolOther').value.trim() ? '其他：' + $('schoolOther').value.trim() : '') : (val('school') || '');
+  const courses = [...$('subjects').querySelectorAll('input:checked')].map(x => x.value);
+  if (name.length < 2) return show($('regMsg'), aff === '金牌班內生' ? '請搜尋並選擇學生，或輸入學生全名' : '請輸入學生姓名');
+  const phone = $('phone').value.replace(/\D/g, '');
+  if (!/^09\d{8}$/.test(phone)) return show($('regMsg'), '家長手機請填 09 開頭的 10 碼');
+  if (!school) return show($('regMsg'), '請選擇學校');
+  if (!courses.length) return show($('regMsg'), '請至少選一個科目');
+  $('submit').disabled = true;
+  try {
+    const res = await rpc('special_register', { p: {
+      registration_id: editing ? editing.registration_id : null,
+      category: CAT.category, batch: val('batch'), applicant_role: val('role'), affiliation: aff,
+      student_id: aff === '金牌班內生' && picked ? picked.student_id : null, student_name: name,
+      school, parent_phone: phone, course_ids: courses, meals: collectMeals(), memo: $('memo').value
+    } });
+    show($('regMsg'), `已報名！${res.student_name} 的報名已${editing ? '更新' : '送出'}。`, 'ok');
+    await loadMine();
+    setTimeout(() => { $('reg').hidden = true; $('mine').scrollIntoView({ behavior: 'smooth' }); }, 1200);
+  } catch (err) { show($('regMsg'), err.message); }
+  finally { $('submit').disabled = false; }
+};
+
+/* ---------- 啟動 ---------- */
+(async () => {
+  try { if (!(await loadOptions())) return; }
+  catch (e) { $('loc').textContent = '載入失敗：' + e.message; return; }
+  // 登入狀態改變（含點信中連結回來）時重新畫面；放到 setTimeout 避免在 auth 回呼中直接呼叫 API
+  let lastUser;
+  sb.auth.onAuthStateChange((_evt, session) => {
+    const u = session?.user?.id || null;
+    if (u === lastUser) return;
+    lastUser = u;
+    setTimeout(() => render(session), 0);
+  });
+})();
+</script>
+</body>
+</html>
