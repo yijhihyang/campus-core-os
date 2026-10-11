@@ -1150,11 +1150,18 @@ const TABLES = {
     load: async () => {
       const [rows, helpers] = await Promise.all([
         rpc('admin_list', { p_key: 'registrations', p_category: S.cat, p_batch: S.tbatch || null }),
-        rpc('admin_registration_helpers', { p_category: S.cat }).catch(() => ({})),
+        rpc('admin_registration_meta', { p_category: S.cat }).catch(() => ({})),
       ]);
       await coursesOf(S.cat);
       const days = b => [...new Set(COURSES.filter(c => c.batch === b).map(c => c.course_date))].sort();
-      rows.forEach(r => { r.helper = (helpers || {})[r.registration_id] || null; r._days = days(r.batch); });
+      rows.forEach(r => {
+        const m = (helpers || {})[r.registration_id] || {};
+        r.helper = m.helper || null;
+        // 最後修改人：老師／行政顯示「○○老師」，家長顯示他登入的 Email
+        r.last_by = m.last_name ? `${m.last_name}老師` : (m.last_email || '');
+        r.last_at = m.last_at || r.updated_at;
+        r._days = days(r.batch);
+      });
       return rows;
     },
     sort: { k: 'created_at', d: -1 },
@@ -1180,7 +1187,8 @@ const TABLES = {
       { k: 'source', t: '來源', type: 'chip', hide: true },
       { k: 'log_count', t: '修改次數', type: 'num', hide: true },
       { k: 'created_at', t: '報名時間', type: 'dt' },
-      { k: 'updated_at', t: '最後修改', type: 'dt', hide: true },
+      { k: 'last_by', t: '最後修改人' },
+      { k: 'last_at', t: '最後修改時間', type: 'dt' },
     ],
     bulk: [
       { label: '批次取消報名', run: async (rows, tb) => {
