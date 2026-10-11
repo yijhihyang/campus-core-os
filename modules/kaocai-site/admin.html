@@ -43,6 +43,77 @@
   nav a{display:block;padding:8px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px}
   nav a.on{background:var(--sky);color:var(--sky-ink);font-weight:700}
   nav a.soon{color:#B9B6AE;pointer-events:none}
+  nav a[data-step]{display:flex;align-items:center;gap:8px}
+  nav a .sn{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--grey);color:var(--muted)}
+  nav a[data-state=done] .sn{background:var(--mint);color:var(--mint-ink)}
+  nav a[data-state=doing] .sn{background:var(--sky);color:var(--sky-ink)}
+  nav a[data-state=todo] .sn{background:var(--lemon);color:var(--lemon-ink)}
+  nav a.now .sn{background:var(--gold);color:#fff;box-shadow:0 0 0 3px rgba(201,162,75,.25)}
+  nav a.flowlink{font-weight:700;color:var(--navy);margin-bottom:4px}
+  /* 流程條（每個步驟頁上方） */
+  .flowbar{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:8px 10px;margin-bottom:14px;overflow-x:auto}
+  .flowbar .ph{display:flex;align-items:center;gap:4px;flex:none}
+  .flowbar .ph+.ph{border-left:1px solid var(--line);padding-left:10px}
+  .flowbar .phn{font-size:11px;color:var(--muted);margin-right:2px;white-space:nowrap}
+  .flowbar a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:12px;padding:4px 8px;border-radius:999px;white-space:nowrap}
+  .flowbar a:hover{background:var(--grey)}
+  .flowbar a .sn{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--grey);color:var(--muted)}
+  .flowbar a[data-state=done] .sn{background:var(--mint);color:var(--mint-ink)}
+  .flowbar a[data-state=doing] .sn{background:var(--sky);color:var(--sky-ink)}
+  .flowbar a[data-state=todo] .sn{background:var(--lemon);color:var(--lemon-ink)}
+  .flowbar a.here{background:var(--navy);color:#fff}
+  .flowbar a.here .sn{background:#fff;color:var(--navy)}
+  .flowbar a.now:not(.here){color:var(--navy);font-weight:700}
+  .flowbar a.now .sn{background:var(--gold);color:#fff}
+  .flowbar .next{margin-left:auto;flex:none}
+  .stephead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .stephead h2{margin:0;font-size:20px}
+  .stephead .st{font-size:13px;color:var(--muted)}
+  /* 流程導覽頁 */
+  .hero{background:var(--navy);color:#fff;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+  .hero .k{font-size:12px;letter-spacing:.1em;opacity:.7}
+  .hero .t{font-size:22px;font-weight:700;margin:2px 0}
+  .hero .d{font-size:14px;opacity:.85}
+  .hero .btn{background:var(--gold);color:#fff;margin-left:auto}
+  .phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+  .phase{background:#fff;border-radius:16px;padding:14px;position:relative}
+  .phase h3{margin:0 0 2px;font-size:14px;color:var(--navy)}
+  .phase .when{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .phase:not(:last-child)::after{content:'';position:absolute;right:-12px;top:22px;width:10px;height:10px;border-top:2px solid #D8CFBC;border-right:2px solid #D8CFBC;transform:rotate(45deg)}
+  .step{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:inherit;padding:10px;border-radius:12px;border:1.5px solid var(--line);position:relative}
+  .step+.step{margin-top:14px}
+  .step+.step::before{content:'';position:absolute;left:22px;top:-15px;height:13px;border-left:2px dashed #D8CFBC}
+  .step:hover{border-color:var(--navy)}
+  .step .sn{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--grey);color:var(--muted)}
+  .step[data-state=done] .sn{background:var(--mint);color:var(--mint-ink)}
+  .step[data-state=doing] .sn{background:var(--sky);color:var(--sky-ink)}
+  .step[data-state=todo] .sn{background:var(--lemon);color:var(--lemon-ink)}
+  .step .tt{font-weight:700;font-size:14px;color:var(--navy)}
+  .step .sx{font-size:12px;color:var(--muted);margin-top:2px}
+  .step.now{border-color:var(--gold);background:#FFFBF0;box-shadow:0 0 0 3px rgba(201,162,75,.15)}
+  .step.now .sn{background:var(--gold);color:#fff}
+  .step .tag{position:absolute;right:8px;top:-9px;background:var(--gold);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px}
+  .legend2{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:14px}
+  .legend2 i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+  /* 報名表設定 / 統計 */
+  .formset{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+  .formset .card h3{margin:0 0 10px;font-size:15px;color:var(--navy)}
+  .qlist{margin:0;padding:0;list-style:none;font-size:14px}
+  .qlist li{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .qlist li b{flex:none;width:92px;color:var(--navy)}
+  .qlist li span{color:var(--muted)}
+  .linkrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .linkrow code{background:var(--grey);border-radius:8px;padding:6px 10px;font-size:12px;word-break:break-all;flex:1;min-width:0}
+  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .statgrid .card h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+  .sbar{display:grid;grid-template-columns:52px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:14px;margin:8px 0}
+  .sbar .bar{height:10px;background:var(--grey);border-radius:999px;overflow:hidden}
+  .sbar .bar i{display:block;height:100%;background:var(--navy);border-radius:999px}
+  .sbar .n{text-align:right;font-variant-numeric:tabular-nums}
+  .statgrid td.num{text-align:right;font-variant-numeric:tabular-nums}
+  @media (max-width:1700px){ .flowbar .phn{display:none} }
+  @media (max-width:1100px){ .phases{grid-template-columns:repeat(2,minmax(0,1fr))} .phase:nth-child(2)::after{display:none} }
+  @media (max-width:820px){ .phases,.formset{grid-template-columns:1fr} .phase::after{display:none} }
   main{padding:14px 18px 40px;min-width:0}
   .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
   .topbar select{padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
@@ -277,19 +348,23 @@
 <div class="shell" id="app" hidden>
   <nav>
     <div class="brand">考猜後台</div>
-    <div class="sec">當天用</div>
-    <a href="#roll" data-page="roll">點名表／訂餐</a>
-    <a href="#seats" data-page="seats">座位表</a>
-    <div class="sec">報名</div>
-    <a href="#registrations" data-page="registrations">報名總表</a>
-    <a href="#logs" data-page="logs">修改紀錄</a>
-    <div class="sec">行政</div>
-    <a href="#changes" data-page="changes">資料異動審核 <span class="chip c-cx" id="chgBadge" hidden></span></a>
+    <a href="#flow" data-page="flow" class="flowlink">流程導覽</a>
+    <div class="sec">報名前置作業</div>
+    <a href="#courses" data-page="courses" data-step="1"><i class="sn">1</i>活動與課程</a>
+    <a href="#form" data-page="form" data-step="2"><i class="sn">2</i>報名表設定</a>
+    <a href="#fee_rules" data-page="fee_rules" data-step="3"><i class="sn">3</i>學費規則</a>
+    <a href="#rooms" data-page="rooms" data-step="4"><i class="sn">4</i>教室座位</a>
+    <div class="sec">開始報名後</div>
+    <a href="#registrations" data-page="registrations" data-step="5"><i class="sn">5</i>報名名單 <span class="chip c-cx" id="chgBadge" hidden title="資料異動待審核"></span></a>
+    <a href="#stats" data-page="stats" data-step="6"><i class="sn">6</i>人數統計</a>
+    <a href="#seats" data-page="seats" data-step="7"><i class="sn">7</i>座位表</a>
+    <div class="sec">活動當日</div>
+    <a href="#roll" data-page="roll" data-step="8"><i class="sn">8</i>點名／取餐</a>
+    <div class="sec">活動結束後的結算</div>
+    <a href="#attendance_fee" data-page="attendance_fee" data-step="9"><i class="sn">9</i>學費與收款</a>
+    <a href="#exam_results" data-page="exam_results" data-step="10"><i class="sn">10</i>成績與紅包</a>
+    <div class="sec">基本資料</div>
     <a href="#students" data-page="students">學生名單</a>
-    <a href="#courses" data-page="courses">活動與課程</a>
-    <a href="#rooms" data-page="rooms">教室座位</a>
-    <a href="#attendance_fee" data-page="attendance_fee">出席與學費</a>
-    <a href="#exam_results" data-page="exam_results">會考成績</a>
     <div class="sec">帳號</div>
     <a href="#" id="logout">登出 <span class="muted" id="who"></span></a>
   </nav>
@@ -302,6 +377,49 @@
       <span class="muted">最後更新 <span id="updated">—</span></span>
       <button class="btn ghost sm" id="refresh">重新整理</button>
     </div>
+
+    <div class="flowbar noprint" id="flowbar" hidden></div>
+    <div class="stephead" id="stephead" hidden></div>
+
+    <!-- 流程導覽 -->
+    <section id="page-flow" hidden>
+      <div class="hero" id="flowHero"></div>
+      <div class="phases" id="flowPhases"></div>
+      <div class="legend2"><span><i style="background:var(--mint)"></i>完成</span><span><i style="background:var(--sky)"></i>進行中</span>
+        <span><i style="background:var(--lemon)"></i>還沒做</span><span><i style="background:var(--grey)"></i>還沒輪到</span><span><i style="background:var(--gold)"></i>現在該做</span></div>
+    </section>
+
+    <!-- 2. 報名表設定 -->
+    <section id="page-form" hidden>
+      <div class="formset">
+        <div class="card">
+          <h3>開放與截止</h3>
+          <label class="s3d-opt"><input type="checkbox" id="fOpen"> 開放家長報名和修改</label>
+          <div class="fld" style="margin-top:10px"><label class="l" for="fDeadline">報名截止時間</label>
+            <div class="linkrow"><input class="in" type="datetime-local" id="fDeadline" style="max-width:260px">
+              <button class="btn sm" id="fDeadlineSave">儲存截止時間</button><button class="btn ghost sm" id="fDeadlineClear">不設截止</button></div>
+            <div class="hint">過了截止時間，報名表會自動關閉，家長也不能再修改或取消；行政老師在後台仍可修改。</div></div>
+          <div id="fStatus" class="muted" style="margin-top:8px"></div>
+        </div>
+        <div class="card">
+          <h3>報名表連結</h3>
+          <div class="linkrow"><code id="fLink"></code></div>
+          <div class="linkrow" style="margin-top:8px"><button class="btn ghost sm" id="fCopy">複製連結</button><a class="btn ghost sm" id="fOpenLink" target="_blank" rel="noopener" style="text-decoration:none">開啟報名表預覽</a></div>
+          <div class="hint" style="margin-top:8px">報名表上方會顯示活動名稱、活動描述和上課地點；場次和課程來自第 1 步。</div>
+        </div>
+        <div class="card" style="grid-column:1/-1">
+          <h3>問卷項目與填寫流程</h3>
+          <ol class="qlist" id="fQuestions"></ol>
+          <p class="muted" style="margin:10px 0 0">目前題目是固定的。自訂題目、調整順序、修改預設回答，會在下一階段做成可以在這裡編輯。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. 人數統計 -->
+    <section id="page-stats" hidden>
+      <div class="tools" style="margin-bottom:12px"><span class="muted" id="statInfo"></span><span class="spacer"></span><button class="btn ghost sm" id="statCopy">複製統計文字</button></div>
+      <div class="statgrid" id="statGrid"></div>
+    </section>
 
     <!-- 點名表 -->
     <section id="page-roll" hidden>
@@ -474,7 +592,7 @@ async function loadBootstrap() {
   $('cat').value = S.cat;
   fillBatches();
 }
-const TABLE_PAGES = ['registrations', 'logs', 'changes', 'students', 'courses', 'attendance_fee', 'exam_results'];
+const TABLE_PAGES = ['registrations', 'students', 'courses', 'fee_rules', 'attendance_fee', 'exam_results'];
 const isTablePage = () => TABLE_PAGES.includes(S.page);
 function fillBatches() {
   const c = CATS.find(x => x.category === S.cat);
@@ -502,20 +620,24 @@ $('refresh').onclick = () => reload();
 
 /* ===== 路由 ===== */
 function route() {
-  S.page = (location.hash.replace('#', '') || 'roll');
+  S.page = (location.hash.replace('#', '') || 'flow');
+  // 舊網址相容：修改紀錄、資料異動審核現在是「報名名單」底下的分頁
+  if (S.page === 'logs' || S.page === 'changes') { S.sub.registrations = S.page; S.page = 'registrations'; }
   if (S.page !== 'rooms' && ROOM.dirty) {
     if (!confirm('教室座位還沒儲存，確定要離開嗎？')) { history.replaceState(null, '', '#rooms'); S.page = 'rooms'; return; }
     ROOM.dirty = false;
   }
-  if (!['roll', 'seats', 'rooms', ...TABLE_PAGES].includes(S.page)) S.page = 'roll';
+  if (!['flow', 'form', 'stats', 'roll', 'seats', 'rooms', ...TABLE_PAGES].includes(S.page)) S.page = 'flow';
   document.querySelectorAll('nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === S.page));
-  $('page-roll').hidden = S.page !== 'roll';
+  ['flow', 'form', 'stats', 'roll'].forEach(p => $('page-' + p).hidden = S.page !== p);
   $('page-seats').hidden = S.page !== 'seats';
   $('page-rooms').hidden = S.page !== 'rooms';
   $('page-table').hidden = !isTablePage();
   // 學生名單、會考成績和活動無關，隱藏活動／場次選單
-  const noScope = ['students', 'exam_results', 'changes', 'rooms'].includes(S.page);
+  const noScope = ['students', 'exam_results', 'rooms'].includes(S.page);
+  renderFlowChrome();
   $('cat').hidden = $('batch').hidden = $('regOpen').hidden = noScope;
+  if (['flow', 'form', 'stats'].includes(S.page)) $('batch').hidden = true;  // 這幾頁看整個活動，不分場次
   fillBatches();
   closeDrawer();
   reload();
@@ -525,14 +647,18 @@ let busy = false;
 async function reload() {
   if (busy) return;
   try {
-    if (S.page === 'roll') await loadBoard();
+    loadFlow().catch(() => {});
+    if (S.page === 'flow') await loadFlow();
+    else if (S.page === 'form') renderFormPage();
+    else if (S.page === 'stats') await loadStats();
+    else if (S.page === 'roll') await loadBoard();
     else if (S.page === 'seats') await loadBoardThenSeats();
     else if (S.page === 'rooms') await loadRooms();
     else await openTablePage(S.page);
     $('updated').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
   } catch (e) { toast(e.message, true); }
 }
-setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && !isTablePage() && S.page !== 'rooms') reload(); }, 15000);
+setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && !isTablePage() && !['rooms', 'form'].includes(S.page)) reload(); }, 15000);
 
 /* ===== 點名表 ===== */
 let BOARD = null;
@@ -1200,6 +1326,160 @@ document.addEventListener('pointermove', ev => {
 });
 document.addEventListener('pointerup', () => { ROOM.paint = null; });
 window.addEventListener('beforeunload', ev => { if (ROOM.dirty) { ev.preventDefault(); ev.returnValue = ''; } });
+
+/* ===== 依業務流程的導覽 =====
+   報名前置作業（1–4）→ 開始報名後（5–7）→ 活動當日（8）→ 活動結束後的結算（9–10）
+   每一步的狀態由資料庫 admin_flow_status 算出來，並決定「現在該做」哪一步。 */
+const PHASES = [
+  { t: '報名前置作業', when: '開放報名前', steps: [1, 2, 3, 4] },
+  { t: '開始報名後', when: '報名期間', steps: [5, 6, 7] },
+  { t: '活動當日', when: '上課當天', steps: [8] },
+  { t: '活動結束後的結算', when: '課程結束後', steps: [9, 10] },
+];
+const STEPS = {
+  1: { page: 'courses', t: '建立活動與課程', s: '活動與課程', desc: '活動名稱、描述、場次，以及每堂課的日期時間、老師、教室' },
+  2: { page: 'form', t: '設定報名表', s: '報名表', desc: '開放報名、截止時間、報名表連結' },
+  3: { page: 'fee_rules', t: '學費規則', s: '學費規則', desc: '依報名科目數決定學費' },
+  4: { page: 'rooms', t: '教室座位配置', s: '教室座位', desc: '每間教室的排數、走道、門口、不開放座位' },
+  5: { page: 'registrations', t: '等待家長報名', s: '報名名單', desc: '查看報名、修改紀錄，審核家長改的學校或電話' },
+  6: { page: 'stats', t: '統計報名與訂餐', s: '人數統計', desc: '各科報名人數、每天的葷素訂餐數' },
+  7: { page: 'seats', t: '安排座位表', s: '座位表', desc: '每一科排座，3D 疊圖檢查有沒有換位' },
+  8: { page: 'roll', t: '現場點名與取餐', s: '點名／取餐', desc: '出席會自動用來計算學費' },
+  9: { page: 'attendance_fee', t: '學費與收款', s: '學費收款', desc: '確認應收、已收，誰還沒繳' },
+  10: { page: 'exam_results', t: '會考成績與紅包', s: '成績紅包', desc: '登記成績，自動算出建議紅包' },
+};
+const PAGE_STEP = Object.fromEntries(Object.entries(STEPS).map(([n, x]) => [x.page, +n]));
+let FLOW = null;
+const money = n => '$' + Number(n || 0).toLocaleString('zh-TW');
+function stepState(n, F = FLOW) {
+  if (!F || !F.category) return { st: 'wait', x: '' };
+  const before = !F.first_date || F.today < F.first_date, after = F.last_date && F.today > F.last_date;
+  switch (n) {
+    case 1: return F.courses ? { st: 'done', x: `${F.courses} 堂課${F.batches ? `・${F.batches} 個場次` : '・不分場次'}` } : { st: 'todo', x: '還沒有課程' };
+    case 2: return F.reg_open ? { st: 'done', x: '報名開放中' } : F.registrations ? { st: 'done', x: '報名已關閉' } : { st: 'todo', x: '還沒開放報名' };
+    case 3: return F.fee_rules ? { st: 'done', x: `${F.fee_rules} 條規則` } : { st: 'todo', x: '還沒設定學費' };
+    case 4: return F.courses_no_room ? { st: 'todo', x: `${F.courses_no_room} 堂課還沒選教室` }
+      : F.rooms_no_layout ? { st: 'todo', x: `${F.rooms_no_layout} 間教室還沒設定座位` } : F.courses ? { st: 'done', x: '教室都設定好了' } : { st: 'wait', x: '先建立課程' };
+    case 5: return F.pending_changes ? { st: 'doing', x: `${F.registrations} 人報名・${F.pending_changes} 筆資料待審核` }
+      : F.reg_open ? { st: 'doing', x: `已有 ${F.registrations} 人報名` } : F.registrations ? { st: 'done', x: `共 ${F.registrations} 人報名` } : { st: 'wait', x: '開放報名後開始' };
+    case 6: return F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `${F.items} 科次・${F.meals} 份餐` } : { st: 'wait', x: '還沒有人報名' };
+    case 7: return !F.items ? { st: 'wait', x: '還沒有人報名' } : F.items_seated >= F.items ? { st: 'done', x: `${F.items} 科次都排好了` } : { st: 'doing', x: `已排 ${F.items_seated}／${F.items} 科次` };
+    case 8: return before ? { st: 'wait', x: F.first_date ? `${md(F.first_date)} 開始` : '還沒有上課日期' }
+      : F.items_marked >= F.items_due_today && F.items_due_today ? { st: 'done', x: `已點名 ${F.items_marked} 科次` } : { st: 'doing', x: `已點名 ${F.items_marked}／${F.items_due_today} 科次` };
+    case 9: return !after && !F.items_marked ? { st: 'wait', x: '課程結束後結算' } : !F.fee_total ? { st: 'todo', x: '還沒有應收金額' }
+      : F.fee_unpaid_people ? { st: 'doing', x: `${F.fee_unpaid_people} 人未繳清・待收 ${money(F.fee_total - F.fee_paid)}` } : { st: 'done', x: `已收齊 ${money(F.fee_paid)}` };
+    case 10: return !F.exam_results ? { st: after ? 'todo' : 'wait', x: `還沒有 ${F.exam_year} 年的會考成績` }
+      : F.envelopes_set < F.exam_results ? { st: 'doing', x: `${F.exam_results} 人成績・${F.envelopes_set} 人已定紅包` } : { st: 'done', x: `${F.exam_results} 人・已領 ${F.envelopes_received} 人` };
+  }
+}
+function currentStep(F = FLOW) {
+  if (!F || !F.category) return 1;
+  const notDone = ns => ns.find(n => stepState(n, F).st !== 'done');
+  if (F.first_date && F.today >= F.first_date && F.today <= F.last_date) return 8;
+  if (F.last_date && F.today > F.last_date) return notDone([9, 10]) || 10;
+  return notDone([1, 2, 3, 4]) || (F.pending_changes ? 5 : null) || notDone([7]) || (F.reg_open ? 5 : 7);
+}
+async function loadFlow() {
+  if (!S.cat) return;
+  FLOW = await rpc('admin_flow_status', { p_category: S.cat });
+  renderFlowChrome();
+  if (S.page === 'flow') renderFlowPage();
+}
+function renderFlowChrome() {
+  const now = currentStep(), here = PAGE_STEP[S.page];
+  document.querySelectorAll('nav a[data-step]').forEach(a => {
+    const n = +a.dataset.step; a.dataset.state = FLOW ? stepState(n).st : ''; a.classList.toggle('now', n === now);
+  });
+  const show = !!here && S.page !== 'flow';
+  $('flowbar').hidden = !show; $('stephead').hidden = !show;
+  if (!show) return;
+  $('flowbar').innerHTML = PHASES.map(ph => `<div class="ph"><span class="phn">${ph.t}</span>${ph.steps.map(n => {
+      const st = stepState(n).st;
+      return `<a href="#${STEPS[n].page}" data-state="${st}" class="${n === here ? 'here' : ''} ${n === now ? 'now' : ''}" title="${esc(STEPS[n].t)}"><span class="sn">${st === 'done' && n !== here ? '✓' : n}</span>${esc(STEPS[n].s)}</a>`;
+    }).join('')}</div>`).join('')
+    + (here < 10 ? `<a class="btn ghost sm next" href="#${STEPS[here + 1].page}">下一步：${esc(STEPS[here + 1].s)} →</a>` : '');
+  const s = stepState(here);
+  $('stephead').innerHTML = `<h2>${here}. ${esc(STEPS[here].t)}</h2><span class="st">${esc(STEPS[here].desc)}${s.x ? `・<b>${esc(s.x)}</b>` : ''}</span>${here === now ? '<span class="chip c-out">現在該做</span>' : ''}`;
+}
+function renderFlowPage() {
+  if (!FLOW || !FLOW.category) { $('flowHero').innerHTML = '<div><div class="t">先建立第一個活動</div></div><a class="btn" href="#courses">開始 →</a>'; $('flowPhases').innerHTML = ''; return; }
+  const now = currentStep(), s = stepState(now);
+  $('flowHero').innerHTML = `<div><div class="k">${esc(FLOW.category)}・現在該做</div><div class="t">第 ${now} 步　${esc(STEPS[now].t)}</div>
+    <div class="d">${esc(s.x || STEPS[now].desc)}</div></div><a class="btn" href="#${STEPS[now].page}">前往 →</a>`;
+  $('flowPhases').innerHTML = PHASES.map(ph => `<div class="phase"><h3>${ph.t}</h3><div class="when">${ph.when}</div>
+    ${ph.steps.map(n => { const x = stepState(n);
+      return `<a class="step ${n === now ? 'now' : ''}" data-state="${x.st}" href="#${STEPS[n].page}">${n === now ? '<span class="tag">現在該做</span>' : ''}
+        <span class="sn">${x.st === 'done' ? '✓' : n}</span><span><div class="tt">${n}. ${esc(STEPS[n].t)}</div><div class="sx">${esc(x.x || STEPS[n].desc)}</div></span></a>`; }).join('')}
+  </div>`).join('');
+}
+
+/* ===== 2. 報名表設定 ===== */
+const FORM_URL = () => new URL('kaocai.html', location.href.split('#')[0]).href;
+const FORM_QUESTIONS = [
+  ['登入', 'Email 收驗證碼登入（同一個 Email 可以幫兄弟姊妹報名）'],
+  ['填表人身分', '學生／家長'],
+  ['班內／班外', '預設「金牌班內生」'],
+  ['學生姓名', '班內生從名單搜尋，選到後自動帶入學校和家長手機'],
+  ['學校', '班內生預設帶入學生資料；改了會送到「資料異動審核」'],
+  ['家長手機', '班內生只顯示遮罩號碼，預設沿用'],
+  ['報名場次', '只有一個場次或不分場次時不顯示'],
+  ['報名科目', '預設全選'],
+  ['中餐', '只有當天上午、下午都有課才會問，預設不訂餐'],
+  ['備註', '選填'],
+];
+function toLocalInput(ts) { if (!ts) return ''; const d = new Date(ts); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
+function renderFormPage() {
+  const c = CATS.find(x => x.category === S.cat); if (!c) return;
+  $('fOpen').checked = !!c.reg_open;
+  $('fDeadline').value = toLocalInput(c.reg_deadline);
+  const dl = c.reg_deadline ? new Date(c.reg_deadline) : null, past = dl && dl < new Date();
+  $('fStatus').innerHTML = !c.reg_open ? '目前<b>沒有開放</b>，家長打開報名表會看到「目前沒有開放報名的活動」。'
+    : past ? `已經在 ${dl.toLocaleString('zh-TW', { hour12: false })} <b>截止</b>，報名表不再顯示這個活動。`
+    : dl ? `報名開放中，<b>${dl.toLocaleString('zh-TW', { hour12: false })}</b> 截止。` : '報名開放中，沒有設定截止時間。';
+  $('fLink').textContent = FORM_URL(); $('fOpenLink').href = FORM_URL();
+  $('fQuestions').innerHTML = FORM_QUESTIONS.map(([q, d], i) => `<li><b>${i + 1}. ${q}</b><span>${d}</span></li>`).join('');
+}
+$('fOpen').onchange = async e => {
+  try { await rpc('admin_set_reg_open', { p_category: S.cat, p_open: e.target.checked }); toast(e.target.checked ? '已開放報名' : '已關閉報名'); await loadBootstrap(); renderFormPage(); loadFlow(); }
+  catch (err) { toast(err.message, true); e.target.checked = !e.target.checked; }
+};
+async function saveDeadline(v) {
+  try {
+    await rpc('admin_set_reg_deadline', { p_category: S.cat, p_deadline: v ? new Date(v).toISOString() : null });
+    toast(v ? '已儲存截止時間' : '已取消截止時間'); await loadBootstrap(); renderFormPage();
+  } catch (err) { toast(err.message, true); }
+}
+$('fDeadlineSave').onclick = () => { if (!$('fDeadline').value) return toast('請先選擇截止時間', true); saveDeadline($('fDeadline').value); };
+$('fDeadlineClear').onclick = () => saveDeadline(null);
+$('fCopy').onclick = () => navigator.clipboard.writeText(FORM_URL()).then(() => toast('已複製報名表連結'));
+
+/* ===== 6. 人數統計（每個場次：各科人數、每天葷素） ===== */
+let STATS = [];
+async function loadStats() {
+  const c = CATS.find(x => x.category === S.cat), bs = c?.batches || [];
+  STATS = await Promise.all(bs.map(async b => ({ batch: b, board: await rpc('admin_board', { p_category: S.cat, p_batch: b }) })));
+  const rank = n => { const i = SUBJ_ORDER.indexOf(n); return i < 0 ? 99 : i; };
+  let all = 0;
+  $('statGrid').innerHTML = STATS.map(({ batch, board }) => {
+    const people = new Set(board.roster.filter(r => r.status === '報名中').map(r => r.registration_id)).size; all += people;
+    const cs = board.courses.slice().sort((a, b) => rank(a.course_name) - rank(b.course_name) || (a.course_date + a.start_time).localeCompare(b.course_date + b.start_time));
+    const max = Math.max(1, ...cs.map(x => x.enrolled));
+    const meals = board.meal_counts.slice().sort((a, b) => a.course_date.localeCompare(b.course_date));
+    return `<div class="card"><h3>${c.implicit ? esc(S.cat) : esc(batch) + ' 場次'}</h3><div class="muted">共 ${people} 人報名</div>
+      ${cs.map(x => `<div class="sbar"><b>${esc(x.course_name)}</b><span class="bar"><i style="width:${x.enrolled / max * 100}%"></i></span><span class="n">${x.enrolled} 人</span></div>`).join('') || '<p class="muted">還沒有課程</p>'}
+      <div class="tbl" style="margin-top:12px"><table><thead><tr><th>日期</th><th>葷食</th><th>素食</th><th>合計</th></tr></thead><tbody>
+      ${meals.map(m => `<tr><td>${md(m.course_date)}</td><td class="num">${m.meat}</td><td class="num">${m.veg}</td><td class="num"><b>${m.total}</b></td></tr>`).join('') || '<tr><td colspan="4" class="muted">沒有需要訂餐的日子</td></tr>'}
+      </tbody></table></div></div>`;
+  }).join('') || '<div class="card muted">這個活動還沒有場次或課程</div>';
+  $('statInfo').textContent = `${S.cat}・共 ${all} 人報名`;
+}
+$('statCopy').onclick = () => {
+  const rank = n => { const i = SUBJ_ORDER.indexOf(n); return i < 0 ? 99 : i; };
+  const txt = STATS.map(({ batch, board }) => [`【${batch}】`,
+    ...board.courses.slice().sort((a, b) => rank(a.course_name) - rank(b.course_name)).map(x => `${x.course_name} ${x.enrolled} 人`),
+    ...board.meal_counts.map(m => `${md(m.course_date)} 葷食 ${m.meat} 份、素食 ${m.veg} 份`)].join('\n')).join('\n\n');
+  navigator.clipboard.writeText(txt).then(() => toast('已複製統計文字'));
+};
 
 /* ===== 通用表格：排序、篩選、欄位顯示／順序、分頁、CSV、批次動作；版面存在資料庫 ===== */
 let PREFS = {}, LOOK = null, COURSES = null;
@@ -2060,7 +2340,7 @@ const TABLES = {
     key: 'exam_results', title: '會考成績', item: '會考成績', id: 'id',
     load: () => rpc('admin_list', { p_key: 'exam_results' }),
     sort: { k: 'year', d: -1 },
-    note: '標籤空白時，系統依成績自動算出「nA m+」。建議紅包依 A 的數量自動計算，實際發放金額填在「紅包」。',
+    note: '標籤空白時，系統依成績自動算出「nA m+」。建議紅包目前依 A 的數量用固定規則計算（紅包規則設定會在下一階段做成可調整），實際發放金額填在「紅包」。',
     cols: [
       { k: 'year', t: '年度', type: 'num' },
       { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
@@ -2102,14 +2382,16 @@ async function reviewMany(rows, apply, tb) {
   catch (e) { toast(e.message, true); }
   tb.sel.clear(); await tb.reload();
 }
+let CHG_N = 0;
 function setChgBadge(rows) {
   const n = (rows || []).filter(r => r.status === '待審核').length;
-  $('chgBadge').hidden = !n; $('chgBadge').textContent = n;
+  $('chgBadge').hidden = !n; $('chgBadge').textContent = n; CHG_N = n;
+  const t = document.querySelector('#subtabs [data-sub=changes]'); if (t) t.textContent = '資料異動審核' + (n ? `（${n}）` : '');
 }
 const TB = {};
 const SUBTABS = {
   courses: [['categories', '活動與場次'], ['courses', '課程']],
-  attendance_fee: [['attendance_fee', '出席與學費'], ['fee_rules', '學費規則']],
+  registrations: [['registrations', '報名總表'], ['logs', '修改紀錄'], ['changes', '資料異動審核']],
 };
 // 學生名單：預設只看國三，可切換全部
 const STUDENT_TABS = [['g9', '國三'], ['all', '全部學生']];
@@ -2119,7 +2401,7 @@ async function openTablePage(page) {
   const sub = tabs ? (S.sub[page] || tabs[0][0]) : null;
   const key = page === 'students' ? 'students' : (sub || page);
   $('subtabs').hidden = !tabs;
-  $('subtabs').innerHTML = tabs ? tabs.map(([k, t]) => `<button type="button" class="pill ${k === sub ? 'on' : ''}" data-sub="${k}">${t}</button>`).join('') : '';
+  $('subtabs').innerHTML = tabs ? tabs.map(([k, t]) => `<button type="button" class="pill ${k === sub ? 'on' : ''}" data-sub="${k}">${t}${k === 'changes' && CHG_N ? `（${CHG_N}）` : ''}</button>`).join('') : '';
   if (!TB[key]) TB[key] = new DataTable(TABLES[key]());
   const tb = TB[key];
   if (page === 'students') {

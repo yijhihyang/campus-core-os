@@ -222,7 +222,8 @@ async function loadOptions() {
   CAT = cats[0];
   $('title').textContent = CAT.category + ' 報名';
   $('loc').textContent = CAT.location ? '📍 ' + CAT.location : '';
-  if (CAT.description) { const d = $('catDesc'); d.textContent = CAT.description; d.hidden = false; }
+  const desc = [CAT.description, CAT.deadline ? `報名截止：${new Date(CAT.deadline).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}` : ''].filter(Boolean).join('\n');
+  if (desc) { const d = $('catDesc'); d.textContent = desc; d.hidden = false; }
   if (!CAT.batches?.length) { $('loc').textContent = '目前還沒有開放報名的課程'; return false; }
   $('batches').innerHTML = CAT.batches.map((b, i) =>
     `<label class="chip"><input type="radio" name="batch" value="${esc(b.batch)}" ${i === 0 ? 'checked' : ''}><span>${esc(b.batch)}</span></label>`).join('');
