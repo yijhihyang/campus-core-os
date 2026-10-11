@@ -101,6 +101,10 @@
   .dt-tools .in{width:220px;padding:7px 10px}
   .dt th{cursor:pointer;user-select:none}
   .dt th.nosort{cursor:default}
+  .dt th[draggable="true"]{cursor:grab}
+  .dt th.dragging{opacity:.4}
+  .dt th.drop-before{box-shadow:inset 3px 0 0 var(--gold)}
+  .dt th.drop-after{box-shadow:inset -3px 0 0 var(--gold)}
   .dt th .ar{color:var(--gold);font-size:11px;margin-left:3px}
   .dt tr.filters th{background:#fff;padding:4px 6px;cursor:default;position:static}
   .dt tr.filters input,.dt tr.filters select{width:100%;min-width:60px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:#fff}
@@ -733,7 +737,7 @@ class DataTable {
       </div>
       ${cfg.note ? `<p class="muted" style="margin:0 0 8px">${cfg.note}</p>` : ''}
       <div class="tbl"><table class="dt"><thead>
-        <tr><th class="ck nosort"><input type="checkbox" data-act="selall" ${allSel ? 'checked' : ''} aria-label="全選這一頁"></th>${vis.map(c => `<th class="${cls(c)}" data-sort="${c.k}" title="點一下排序">${esc(c.t)}${ar(c)}</th>`).join('')}</tr>
+        <tr><th class="ck nosort"><input type="checkbox" data-act="selall" ${allSel ? 'checked' : ''} aria-label="全選這一頁"></th>${vis.map(c => `<th class="${cls(c)}" data-sort="${c.k}" draggable="true" title="點一下排序；按住左右拖曳可調整欄位順序">${esc(c.t)}${ar(c)}</th>`).join('')}</tr>
         <tr class="filters"><th class="ck"></th>${vis.map(c => `<th>${filt(c)}</th>`).join('')}</tr>
       </thead><tbody>
         ${rows.map(r => { const id = this.rid(r); return `<tr data-id="${esc(id)}" class="${this.sel.has(id) ? 'sel' : ''} ${cfg.rowClass ? cfg.rowClass(r) : ''}"><td class="ck"><input type="checkbox" data-pick="${esc(id)}" ${this.sel.has(id) ? 'checked' : ''} aria-label="選取"></td>${vis.map(c => `<td class="${cls(c)}">${cell(c, r)}</td>`).join('')}</tr>`; }).join('')
@@ -750,6 +754,34 @@ class DataTable {
   }
   bind() {
     const h = this.host;
+    // 欄位標題左右拖曳換順序
+    let dragK = null;
+    const clearMarks = () => h.querySelectorAll('th.drop-before,th.drop-after,th.dragging').forEach(x => x.classList.remove('drop-before', 'drop-after', 'dragging'));
+    const side = (th, e) => { const r = th.getBoundingClientRect(); return e.clientX < r.left + r.width / 2 ? 'before' : 'after'; };
+    h.ondragstart = e => {
+      const th = e.target.closest?.('th[data-sort]'); if (!th) return;
+      dragK = th.dataset.sort; th.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragK);
+    };
+    h.ondragover = e => {
+      const th = e.target.closest?.('th[data-sort]'); if (!dragK || !th) return;
+      e.preventDefault();
+      h.querySelectorAll('th.drop-before,th.drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after'));
+      if (th.dataset.sort !== dragK) th.classList.add('drop-' + side(th, e));
+    };
+    h.ondrop = e => {
+      const th = e.target.closest?.('th[data-sort]'); if (!dragK || !th) return;
+      e.preventDefault();
+      const to = th.dataset.sort;
+      if (to !== dragK) {
+        const after = side(th, e) === 'after';
+        this.order.splice(this.order.indexOf(dragK), 1);
+        this.order.splice(this.order.indexOf(to) + (after ? 1 : 0), 0, dragK);
+        this.savePrefs();
+      }
+      dragK = null; this.render();
+    };
+    h.ondragend = () => { dragK = null; clearMarks(); };
     h.oninput = e => {
       const t = e.target;
       if (t.dataset.filter !== undefined) { this.filters[t.dataset.filter] = t.value; this.page = 0; this.render(); }
