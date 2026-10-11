@@ -96,6 +96,47 @@
   .dragghost{position:fixed;pointer-events:none;z-index:60;width:84px;opacity:.92;box-shadow:0 4px 12px rgba(0,0,0,.15)}
   .panel{background:#fff;border-radius:16px;padding:14px;margin-top:12px;border:1.5px solid var(--line)}
   .names{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px 10px;margin:10px 0;font-size:14px}
+  /* 通用表格 */
+  .dt-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+  .dt-tools .in{width:220px;padding:7px 10px}
+  .dt th{cursor:pointer;user-select:none}
+  .dt th.nosort{cursor:default}
+  .dt th .ar{color:var(--gold);font-size:11px;margin-left:3px}
+  .dt tr.filters th{background:#fff;padding:4px 6px;cursor:default;position:static}
+  .dt tr.filters input,.dt tr.filters select{width:100%;min-width:60px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:#fff}
+  .dt tbody tr{cursor:pointer}
+  .dt tbody tr:hover td{background:#FDFBF6}
+  .dt tbody tr.sel td{background:#F3F7FC}
+  .dt td.wrap{white-space:pre-line;min-width:180px;max-width:360px}
+  .dt td.num,.dt th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .dt tfoot td{background:#FBF8F1;font-weight:700;color:var(--navy)}
+  .sumline{margin-right:auto;color:var(--navy);font-weight:700;font-variant-numeric:tabular-nums}
+  .dt td.ck,.dt th.ck{width:34px;cursor:default}
+  .pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;margin-top:8px;font-size:13px;color:var(--muted)}
+  .pager select{border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:#fff}
+  .pop{position:absolute;z-index:40;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 8px 24px rgba(31,45,74,.12);max-height:60vh;overflow:auto;min-width:220px}
+  .pop .row{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:14px}
+  .pop .row label{flex:1}
+  .pop .mv{border:1px solid var(--line);background:#fff;border-radius:6px;padding:0 6px;font-size:12px}
+  .subtabs{display:flex;gap:6px;margin-bottom:12px}
+  .drawer-bg{position:fixed;inset:0;background:rgba(31,45,74,.25);z-index:70}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:#fff;z-index:71;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(31,45,74,.15)}
+  .drawer header{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .drawer header h2{margin:0;flex:1}
+  .drawer .body{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+  .drawer footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .fld label.l{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .fld .in{padding:8px 10px}
+  .fld textarea.in{min-height:70px;resize:vertical}
+  .fld .hint{font-size:12px;color:var(--muted);margin-top:3px}
+  .opts{display:flex;flex-wrap:wrap;gap:6px}
+  .opts label{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;font-size:14px;cursor:pointer}
+  .opts label:has(input:checked){border-color:var(--navy);background:#F3F5F9}
+  .clist{display:flex;flex-direction:column;gap:6px}
+  .clist label{display:flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;font-size:14px;cursor:pointer}
+  .clist label:has(input:checked){border-color:var(--navy);background:#F3F5F9}
+  .confirmbar{background:var(--rose);color:var(--rose-ink);border-radius:10px;padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+  .c-ok{background:var(--mint);color:var(--mint-ink)} .c-grey{background:var(--grey);color:var(--muted)} .c-lilac{background:var(--lilac);color:var(--lilac-ink)}
   @media print{
     nav,.topbar,.tools,.unlist,.noprint,.panel{display:none!important}
     .shell{display:block} main{padding:0} body{background:#fff}
@@ -141,10 +182,15 @@
     <div class="sec">當天用</div>
     <a href="#roll" data-page="roll">點名表／訂餐</a>
     <a href="#seats" data-page="seats">座位表</a>
-    <div class="sec">報名（第 2 階段）</div>
-    <a class="soon">報名總表</a><a class="soon">加退選紀錄</a>
-    <div class="sec">行政（第 3 階段）</div>
-    <a class="soon">學生名單</a><a class="soon">課程設定</a><a class="soon">出席與學費</a><a class="soon">會考成績</a>
+    <div class="sec">報名</div>
+    <a href="#registrations" data-page="registrations">報名總表</a>
+    <a href="#item_history" data-page="item_history">加退選紀錄</a>
+    <a href="#logs" data-page="logs">修改紀錄</a>
+    <div class="sec">行政</div>
+    <a href="#students" data-page="students">學生名單</a>
+    <a href="#courses" data-page="courses">課程設定</a>
+    <a href="#attendance_fee" data-page="attendance_fee">出席與學費</a>
+    <a href="#exam_results" data-page="exam_results">會考成績</a>
     <div class="sec">帳號</div>
     <a href="#" id="logout">登出 <span class="muted" id="who"></span></a>
   </nav>
@@ -202,8 +248,20 @@
         <button class="btn" id="pGo">移回未排名單</button>
       </div>
     </section>
+    <!-- 通用表格頁 -->
+    <section id="page-table" hidden>
+      <div class="subtabs" id="subtabs"></div>
+      <div id="dtHost"></div>
+    </section>
   </main>
 </div>
+
+<div class="drawer-bg" id="drawerBg" hidden></div>
+<aside class="drawer" id="drawer" hidden>
+  <header><h2 id="dTitle"></h2><button class="btn ghost sm" id="dClose">關閉</button></header>
+  <form class="body" id="dBody" autocomplete="off"></form>
+  <footer id="dFoot"></footer>
+</aside>
 
 <div class="toast" id="toast" hidden></div>
 
@@ -223,6 +281,8 @@ async function rpc(fn, args) {
   if (error) {
     if (/Could not find the function|does not exist/i.test(error.message) && fn === 'admin_unseat')
       throw new Error('「移回未排」功能尚未啟用，請先在 Supabase 執行「啟用刪除功能.sql」');
+    if (/Could not find the function|does not exist/i.test(error.message) && fn === 'admin_remove')
+      throw new Error('刪除功能尚未啟用，請先在 Supabase 執行「啟用後台刪除列.sql」');
     throw new Error(error.message);
   }
   return data;
@@ -258,12 +318,13 @@ async function onSession(session) {
   if (!me || !me.is_staff) { $('deniedEmail').textContent = session.user.email; $('denied').hidden = false; return; }
   $('who').textContent = me.name || '';
   $('app').hidden = false;
+  PREFS = await rpc('admin_get_prefs').catch(() => ({})) || {};
   await loadBootstrap();
   route();
 }
 
 /* ===== 活動／場次 ===== */
-let CATS = [], S = { cat: null, batch: null, page: 'roll', course: null, seatCourse: null, showCx: false, q: '' };
+let CATS = [], S = { cat: null, batch: null, tbatch: '', page: 'roll', course: null, seatCourse: null, showCx: false, q: '' };
 async function loadBootstrap() {
   const b = await rpc('admin_bootstrap');
   CATS = b.categories;
@@ -272,17 +333,24 @@ async function loadBootstrap() {
   $('cat').value = S.cat;
   fillBatches();
 }
+const TABLE_PAGES = ['registrations', 'item_history', 'logs', 'students', 'courses', 'attendance_fee', 'exam_results'];
+const isTablePage = () => TABLE_PAGES.includes(S.page);
 function fillBatches() {
   const c = CATS.find(x => x.category === S.cat);
   const bs = (c?.batches || []).slice().sort();
-  $('batch').innerHTML = bs.map(b => `<option>${esc(b)}</option>`).join('');
-  if (!bs.includes(S.batch)) S.batch = bs[0];
-  $('batch').value = S.batch;
+  const all = isTablePage();
+  $('batch').innerHTML = (all ? '<option value="">全部場次</option>' : '') + bs.map(b => `<option>${esc(b)}</option>`).join('');
+  if (all) { if (S.tbatch !== '' && !bs.includes(S.tbatch)) S.tbatch = ''; $('batch').value = S.tbatch; }
+  else { if (!bs.includes(S.batch)) S.batch = bs[0]; $('batch').value = S.batch; }
   $('regOpen').classList.toggle('on', !!c?.reg_open);
   $('regOpen').querySelector('span:last-child').textContent = c?.reg_open ? '報名開放中' : '報名已關閉';
 }
-$('cat').onchange = () => { S.cat = $('cat').value; S.course = S.seatCourse = null; fillBatches(); reload(); };
-$('batch').onchange = () => { S.batch = $('batch').value; S.course = S.seatCourse = null; reload(); };
+$('cat').onchange = () => { S.cat = $('cat').value; S.course = S.seatCourse = null; S.tbatch = ''; fillBatches(); reload(); };
+$('batch').onchange = () => {
+  if (isTablePage()) S.tbatch = $('batch').value;
+  else { S.batch = $('batch').value; S.course = S.seatCourse = null; }
+  reload();
+};
 $('regOpen').onclick = async () => {
   const c = CATS.find(x => x.category === S.cat); if (!c) return;
   if (!confirm(c.reg_open ? '要關閉報名嗎？家長將無法再報名或修改。' : '要開放報名嗎？')) return;
@@ -294,10 +362,16 @@ $('refresh').onclick = () => reload();
 /* ===== 路由 ===== */
 function route() {
   S.page = (location.hash.replace('#', '') || 'roll');
-  if (!['roll', 'seats'].includes(S.page)) S.page = 'roll';
+  if (!['roll', 'seats', ...TABLE_PAGES].includes(S.page)) S.page = 'roll';
   document.querySelectorAll('nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === S.page));
   $('page-roll').hidden = S.page !== 'roll';
   $('page-seats').hidden = S.page !== 'seats';
+  $('page-table').hidden = !isTablePage();
+  // 學生名單、會考成績和活動無關，隱藏活動／場次選單
+  const noScope = ['students', 'exam_results'].includes(S.page);
+  $('cat').hidden = $('batch').hidden = $('regOpen').hidden = noScope;
+  fillBatches();
+  closeDrawer();
   reload();
 }
 window.addEventListener('hashchange', route);
@@ -305,11 +379,13 @@ let busy = false;
 async function reload() {
   if (busy) return;
   try {
-    if (S.page === 'roll') await loadBoard(); else await loadBoardThenSeats();
+    if (S.page === 'roll') await loadBoard();
+    else if (S.page === 'seats') await loadBoardThenSeats();
+    else await openTablePage(S.page);
     $('updated').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
   } catch (e) { toast(e.message, true); }
 }
-setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && $('panel').hidden) reload(); }, 15000);
+setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && $('panel').hidden && !isTablePage()) reload(); }, 15000);
 
 /* ===== 點名表 ===== */
 let BOARD = null;
@@ -517,6 +593,713 @@ $('copyFrom').onchange = async () => {
   catch (err) { toast(err.message, true); }
   SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
 };
+
+/* ===== 通用表格：排序、篩選、欄位顯示／順序、分頁、CSV、批次動作；版面存在資料庫 ===== */
+let PREFS = {}, LOOK = null, COURSES = null;
+async function lookups(force) { if (!LOOK || force) LOOK = await rpc('admin_list', { p_key: 'lookups' }); return LOOK; }
+async function coursesOf(cat, force) {
+  if (!COURSES || COURSES._cat !== cat || force) { COURSES = await rpc('admin_list', { p_key: 'courses', p_category: cat }); COURSES._cat = cat; }
+  return COURSES;
+}
+const fmt = {
+  dt: v => v ? new Date(v).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
+  date: v => v ? md(String(v).slice(0, 10)) : '',
+  money: v => (v === null || v === undefined || v === '') ? '' : Number(v).toLocaleString('zh-TW'),
+};
+const chipFor = (v, map) => (v == null || v === '') ? '' : `<span class="chip ${(map || {})[v] || 'c-grey'}">${esc(v)}</span>`;
+const firstBatch = () => (CATS.find(c => c.category === S.cat)?.batches || []).slice().sort()[0];
+const stuLabel = s => `${s.name}（${s.school || '—'}${s.active ? '' : '・非在學'}）`;
+const stuIdFromLabel = l => LOOK.students.find(s => stuLabel(s) === l)?.id || null;
+const SCHOOLS = ['照南國中', '君毅國中', '竹南國中', '大同國中'];
+
+class DataTable {
+  constructor(cfg) {
+    this.cfg = cfg; this.rows = []; this.sel = new Set(); this.filters = {}; this.q = ''; this.page = 0;
+    const p = PREFS[cfg.key] || {};
+    this.order = (p.order || []).filter(k => cfg.cols.some(c => c.k === k));
+    cfg.cols.forEach(c => { if (!this.order.includes(c.k)) this.order.push(c.k); });
+    this.hidden = new Set(p.hidden || cfg.cols.filter(c => c.hide).map(c => c.k));
+    this.sort = p.sort !== undefined ? p.sort : (cfg.sort || null);
+    this.size = p.size || 50;
+  }
+  savePrefs() {
+    const p = { order: this.order, hidden: [...this.hidden], sort: this.sort, size: this.size };
+    PREFS[this.cfg.key] = p;
+    clearTimeout(this._t);
+    this._t = setTimeout(() => rpc('admin_set_prefs', { p_key: this.cfg.key, p_prefs: p }).catch(e => toast('版面設定沒有存到：' + e.message, true)), 600);
+  }
+  col(k) { return this.cfg.cols.find(c => c.k === k); }
+  vis() { return this.order.map(k => this.col(k)).filter(c => c && !this.hidden.has(c.k)); }
+  val(c, r) { return c.get ? c.get(r) : r[c.k]; }
+  text(c, r) {
+    const v = this.val(c, r);
+    if (v == null) return '';
+    if (c.type === 'bool') return v ? '是' : '否';
+    if (c.type === 'dt') return fmt.dt(v);
+    if (c.type === 'date') return String(v).slice(0, 10);
+    return String(v);
+  }
+  rid(r) { return String(r[this.cfg.id]); }
+  view() {
+    let rows = this.rows;
+    const q = this.q.trim().toLowerCase();
+    if (q) rows = rows.filter(r => this.cfg.cols.some(c => this.text(c, r).toLowerCase().includes(q)));
+    for (const [k, f] of Object.entries(this.filters)) {
+      if (!f) continue;
+      const c = this.col(k); if (!c) continue;
+      const exact = c.type === 'bool' || c.type === 'chip';
+      rows = rows.filter(r => { const t = this.text(c, r); return exact ? t === f : t.toLowerCase().includes(f.toLowerCase()); });
+    }
+    if (this.sort) {
+      const c = this.col(this.sort.k);
+      if (c) {
+        const d = this.sort.d, num = ['num', 'money'].includes(c.type);
+        rows = rows.slice().sort((a, b) => {
+          const x = this.val(c, a), y = this.val(c, b);
+          const ex = x == null || x === '', ey = y == null || y === '';
+          if (ex || ey) return ex === ey ? 0 : ex ? 1 : -1;
+          if (num) return (Number(x) - Number(y)) * d;
+          if (typeof x === 'boolean') return ((x ? 1 : 0) - (y ? 1 : 0)) * d;
+          return String(x).localeCompare(String(y), 'zh-Hant', { numeric: true }) * d;
+        });
+      }
+    }
+    return rows;
+  }
+  async reload() {
+    this.host.innerHTML = this.rows.length ? this.host.innerHTML : '<p class="muted">載入中…</p>';
+    this.rows = (await this.cfg.load()) || [];
+    const ids = new Set(this.rows.map(r => this.rid(r)));
+    this.sel = new Set([...this.sel].filter(id => ids.has(id)));
+    this.render();
+  }
+  render() {
+    const h = this.host, cfg = this.cfg, vis = this.vis(), all = this.view();
+    const ae = document.activeElement, focusKey = h.contains(ae) ? (ae.dataset.filter ? 'f:' + ae.dataset.filter : ae.dataset.act === 'q' ? 'q' : null) : null;
+    const caret = focusKey ? ae.selectionStart : null;
+    const size = this.size === 'all' ? Math.max(all.length, 1) : +this.size;
+    const pages = Math.max(1, Math.ceil(all.length / size));
+    if (this.page >= pages) this.page = pages - 1;
+    const rows = all.slice(this.page * size, this.page * size + size);
+    const ar = c => this.sort?.k === c.k ? `<span class="ar">${this.sort.d > 0 ? '▲' : '▼'}</span>` : '';
+    const opts = c => [...new Set(this.rows.map(r => this.text(c, r)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+    const filt = c => (c.type === 'bool' || c.type === 'chip')
+      ? `<select data-filter="${c.k}" aria-label="篩選${esc(c.t)}"><option value="">全部</option>${opts(c).map(o => `<option ${this.filters[c.k] === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+      : `<input data-filter="${c.k}" value="${esc(this.filters[c.k] || '')}" placeholder="篩選" aria-label="篩選${esc(c.t)}">`;
+    const cell = (c, r) => {
+      if (c.html) return c.html(r);
+      const v = this.val(c, r);
+      if (c.type === 'chip') return chipFor(v, c.chips);
+      if (c.type === 'bool') return v ? '<span class="chip c-ok">是</span>' : '<span class="chip c-grey">否</span>';
+      if (c.type === 'money') return fmt.money(v);
+      if (c.type === 'dt') return fmt.dt(v);
+      if (c.type === 'date') return fmt.date(v);
+      return esc(v ?? '');
+    };
+    const cls = c => (['num', 'money'].includes(c.type) ? 'num' : '') + (c.type === 'wrap' ? ' wrap' : '');
+    const sums = vis.some(c => c.sum);
+    const allSel = rows.length > 0 && rows.every(r => this.sel.has(this.rid(r)));
+    const filtered = Object.values(this.filters).some(Boolean) || this.q;
+    h.innerHTML = `
+      <div class="dt-tools">
+        <input class="in" data-act="q" placeholder="搜尋全部欄位" value="${esc(this.q)}" aria-label="搜尋">
+        <span class="muted">${all.length} 筆${all.length !== this.rows.length ? `（共 ${this.rows.length} 筆）` : ''}${this.sel.size ? `・已選 ${this.sel.size} 筆` : ''}</span>
+        <span class="spacer"></span>
+        ${this.sel.size && cfg.bulk ? cfg.bulk.map((b, i) => `<button type="button" class="btn ghost sm" data-bulk="${i}">${esc(b.label)}</button>`).join('') : ''}
+        ${filtered ? '<button type="button" class="btn ghost sm" data-act="clear">清除篩選</button>' : ''}
+        <button type="button" class="btn ghost sm" data-act="cols">欄位</button>
+        <button type="button" class="btn ghost sm" data-act="csv">${this.sel.size ? '匯出選取' : '匯出 CSV'}</button>
+        ${cfg.onSave && cfg.canAdd !== false ? '<button type="button" class="btn sm" data-act="add">＋ 新增</button>' : ''}
+      </div>
+      ${cfg.note ? `<p class="muted" style="margin:0 0 8px">${cfg.note}</p>` : ''}
+      <div class="tbl"><table class="dt"><thead>
+        <tr><th class="ck nosort"><input type="checkbox" data-act="selall" ${allSel ? 'checked' : ''} aria-label="全選這一頁"></th>${vis.map(c => `<th class="${cls(c)}" data-sort="${c.k}" title="點一下排序">${esc(c.t)}${ar(c)}</th>`).join('')}</tr>
+        <tr class="filters"><th class="ck"></th>${vis.map(c => `<th>${filt(c)}</th>`).join('')}</tr>
+      </thead><tbody>
+        ${rows.map(r => { const id = this.rid(r); return `<tr data-id="${esc(id)}" class="${this.sel.has(id) ? 'sel' : ''} ${cfg.rowClass ? cfg.rowClass(r) : ''}"><td class="ck"><input type="checkbox" data-pick="${esc(id)}" ${this.sel.has(id) ? 'checked' : ''} aria-label="選取"></td>${vis.map(c => `<td class="${cls(c)}">${cell(c, r)}</td>`).join('')}</tr>`; }).join('')
+          || `<tr><td colspan="${vis.length + 1}" class="muted" style="text-align:center;padding:28px;cursor:default">${this.rows.length ? '沒有符合篩選的資料' : (cfg.empty || '還沒有資料')}</td></tr>`}
+      </tbody>
+      </table></div>
+      <div class="pager">${sums ? `<span class="sumline">合計：${vis.filter(c => c.sum).map(c => `${esc(c.t)} ${fmt.money(all.reduce((s, r) => s + (Number(this.val(c, r)) || 0), 0))}`).join('・')}</span>` : ''}每頁 <select data-act="size" aria-label="每頁筆數">${[25, 50, 100, 'all'].map(n => `<option value="${n}" ${String(this.size) === String(n) ? 'selected' : ''}>${n === 'all' ? '全部' : n}</option>`).join('')}</select>
+        <button type="button" class="btn ghost sm" data-act="prev" ${this.page ? '' : 'disabled'}>上一頁</button> 第 ${this.page + 1} / ${pages} 頁
+        <button type="button" class="btn ghost sm" data-act="next" ${this.page < pages - 1 ? '' : 'disabled'}>下一頁</button></div>`;
+    if (focusKey) {
+      const el = focusKey === 'q' ? h.querySelector('[data-act="q"]') : h.querySelector(`[data-filter="${focusKey.slice(2)}"]`);
+      if (el) { el.focus(); if (caret != null && el.setSelectionRange) el.setSelectionRange(caret, caret); }
+    }
+  }
+  bind() {
+    const h = this.host;
+    h.oninput = e => {
+      const t = e.target;
+      if (t.dataset.filter !== undefined) { this.filters[t.dataset.filter] = t.value; this.page = 0; this.render(); }
+      else if (t.dataset.act === 'q') { this.q = t.value; this.page = 0; this.render(); }
+    };
+    h.onchange = e => {
+      const t = e.target;
+      if (t.dataset.act === 'size') { this.size = t.value; this.page = 0; this.savePrefs(); this.render(); }
+      else if (t.dataset.act === 'selall') {
+        const all = this.view(), size = this.size === 'all' ? Math.max(all.length, 1) : +this.size;
+        all.slice(this.page * size, this.page * size + size).forEach(r => t.checked ? this.sel.add(this.rid(r)) : this.sel.delete(this.rid(r)));
+        this.render();
+      }
+      else if (t.dataset.pick) { t.checked ? this.sel.add(t.dataset.pick) : this.sel.delete(t.dataset.pick); this.render(); }
+    };
+    h.onclick = e => {
+      const t = e.target;
+      if (t.closest('input,select') && !t.closest('[data-act="cols"]')) return;
+      const th = t.closest('th[data-sort]');
+      if (th) {
+        const k = th.dataset.sort;
+        this.sort = this.sort?.k !== k ? { k, d: 1 } : this.sort.d === 1 ? { k, d: -1 } : null;
+        this.savePrefs(); this.render(); return;
+      }
+      const act = t.closest('[data-act]')?.dataset.act;
+      if (act === 'cols') return this.colsPop(t.closest('[data-act]'));
+      if (act === 'csv') return this.csv();
+      if (act === 'add') return openForm(this, null);
+      if (act === 'clear') { this.filters = {}; this.q = ''; this.page = 0; return this.render(); }
+      if (act === 'prev') { this.page--; return this.render(); }
+      if (act === 'next') { this.page++; return this.render(); }
+      const b = t.closest('[data-bulk]');
+      if (b) return this.cfg.bulk[+b.dataset.bulk].run(this.rows.filter(r => this.sel.has(this.rid(r))), this);
+      const tr = t.closest('tbody tr[data-id]');
+      if (tr && !t.closest('.ck') && this.cfg.form) { const r = this.rows.find(x => this.rid(x) === tr.dataset.id); if (r) openForm(this, r); }
+    };
+  }
+  colsPop(btn) {
+    document.querySelector('.pop')?.remove();
+    const p = document.createElement('div'); p.className = 'pop';
+    const draw = () => {
+      p.innerHTML = '<div class="muted" style="margin-bottom:6px">勾選要顯示的欄位，用 ↑↓ 調整順序</div>' +
+        this.order.map((k, i) => `<div class="row"><input type="checkbox" id="pc_${k}" data-k="${k}" ${this.hidden.has(k) ? '' : 'checked'}><label for="pc_${k}">${esc(this.col(k).t)}</label>
+          <button type="button" class="mv" data-up="${i}" ${i ? '' : 'disabled'} aria-label="上移">↑</button><button type="button" class="mv" data-dn="${i}" ${i < this.order.length - 1 ? '' : 'disabled'} aria-label="下移">↓</button></div>`).join('') +
+        '<div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="btn ghost sm" data-reset>還原預設</button><span class="spacer"></span><button type="button" class="btn sm" data-done>完成</button></div>';
+    };
+    draw(); document.body.appendChild(p);
+    const r = btn.getBoundingClientRect();
+    p.style.top = (r.bottom + scrollY + 6) + 'px';
+    p.style.left = Math.max(8, Math.min(r.left + scrollX, scrollX + innerWidth - 270)) + 'px';
+    p.onchange = e => { const k = e.target.dataset.k; if (!k) return; e.target.checked ? this.hidden.delete(k) : this.hidden.add(k); this.savePrefs(); this.render(); };
+    p.onclick = e => {
+      const up = e.target.dataset.up, dn = e.target.dataset.dn;
+      if (up !== undefined || dn !== undefined) {
+        const i = +(up ?? dn), j = up !== undefined ? i - 1 : i + 1;
+        [this.order[i], this.order[j]] = [this.order[j], this.order[i]];
+        this.savePrefs(); this.render(); draw();
+      }
+      if (e.target.hasAttribute('data-reset')) {
+        this.order = this.cfg.cols.map(c => c.k); this.hidden = new Set(this.cfg.cols.filter(c => c.hide).map(c => c.k)); this.sort = this.cfg.sort || null;
+        this.savePrefs(); this.render(); draw();
+      }
+      if (e.target.hasAttribute('data-done')) p.remove();
+    };
+    setTimeout(() => document.addEventListener('click', function off(ev) { if (!p.contains(ev.target)) { p.remove(); document.removeEventListener('click', off); } }), 0);
+  }
+  csv() {
+    const vis = this.vis();
+    let rows = this.view();
+    if (this.sel.size) rows = rows.filter(r => this.sel.has(this.rid(r)));
+    const out = '﻿' + [vis.map(c => c.t), ...rows.map(r => vis.map(c => this.text(c, r)))]
+      .map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([out], { type: 'text/csv' }));
+    a.download = `${this.cfg.title}_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  }
+}
+
+/* ===== 側邊編輯表單 ===== */
+let DR = null;
+function closeDrawer() { $('drawer').hidden = $('drawerBg').hidden = true; DR = null; }
+$('dClose').onclick = closeDrawer;
+$('drawerBg').onclick = closeDrawer;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && DR) closeDrawer(); });
+$('dBody').onsubmit = e => e.preventDefault();
+async function openForm(tb, row) {
+  const cfg = tb.cfg, isNew = !row;
+  const v = Object.assign({}, cfg.defaults ? cfg.defaults() : {}, row ? JSON.parse(JSON.stringify(row)) : {});
+  try { if (cfg.prepare) await cfg.prepare(v, isNew); } catch (e) { return toast(e.message, true); }
+  DR = { tb, row, isNew, v };
+  $('dTitle').textContent = (isNew ? '新增' : '編輯') + cfg.item;
+  drawForm();
+  $('drawer').hidden = $('drawerBg').hidden = false;
+  $('dBody').querySelector('input:not([type=hidden]):not([readonly]),select,textarea')?.focus();
+}
+function drawForm() {
+  const { tb, isNew, v, row } = DR, cfg = tb.cfg;
+  DR.fields = cfg.form(v, isNew, row).filter(Boolean);
+  $('dBody').innerHTML = DR.fields.map(f => fieldHtml(f, v)).join('');
+  DR.acts = cfg.actions ? cfg.actions(row, isNew).filter(Boolean) : [];
+  $('dFoot').innerHTML = `${cfg.onSave ? '<button type="button" class="btn" id="dSave">儲存</button>' : ''}
+    ${DR.acts.map((a, i) => `<button type="button" class="btn ${a.danger ? 'danger' : 'ghost'} sm" data-da="${i}">${esc(a.label)}</button>`).join('')}
+    <span class="spacer"></span>${!isNew && cfg.onDelete ? '<button type="button" class="btn danger sm" id="dDel">刪除</button>' : ''}
+    <div id="dConfirm" style="width:100%" hidden></div>`;
+}
+function fieldHtml(f, v) {
+  const val = f.val !== undefined ? f.val : v[f.k];
+  const id = 'f_' + (f.k || 'x' + Math.random().toString(36).slice(2, 7));
+  let inner;
+  switch (f.type) {
+    case 'ro': inner = `<div>${esc(val ?? '') || '<span class="muted">—</span>'}</div>`; break;
+    case 'textarea': inner = `<textarea class="in" id="${id}" data-f="${f.k}">${esc(val ?? '')}</textarea>`; break;
+    case 'select': inner = `<select class="in" id="${id}" data-f="${f.k}">${f.blank === false ? '' : '<option value="">（未指定）</option>'}${f.opts.map(o => {
+        const ov = typeof o === 'object' ? o.v : o, ot = typeof o === 'object' ? o.t : o;
+        return `<option value="${esc(ov)}" ${String(val ?? '') === String(ov) ? 'selected' : ''}>${esc(ot)}</option>`; }).join('')}</select>`; break;
+    case 'radio': inner = `<div class="opts">${f.opts.map(o => `<label><input type="radio" name="${id}" data-f="${f.k}" value="${esc(o)}" ${val === o ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>`; break;
+    case 'bool': inner = `<div class="opts"><label><input type="checkbox" id="${id}" data-f="${f.k}" ${val ? 'checked' : ''}> ${esc(f.on || '是')}</label></div>`; break;
+    case 'student': inner = `<input class="in" id="${id}" list="dl_stu" data-f="student_label" value="${esc(val ?? '')}" placeholder="輸入姓名搜尋">
+        <datalist id="dl_stu">${LOOK.students.map(s => `<option value="${esc(stuLabel(s))}">`).join('')}</datalist>`; break;
+    case 'courses': inner = `<div class="clist">${f.list.map(c => `<label><input type="checkbox" data-course="${c.id}" ${f.sel.includes(c.id) ? 'checked' : ''}> ${esc(c.label)}</label>`).join('') || '<span class="muted">這個場次還沒有課程</span>'}</div>`; break;
+    case 'meals': inner = f.days.map(d => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:96px">${esc(d.label)}</span>
+        <select class="in" style="flex:1" data-meal="${d.date}" aria-label="${esc(d.label)} 中餐">${['葷食', '素食', '不訂餐'].map(m => `<option ${(f.val[d.date] || '不訂餐') === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>`).join('') || '<span class="muted">—</span>'; break;
+    default: inner = `<input class="in" id="${id}" type="${f.type || 'text'}" data-f="${f.k}" value="${esc(val ?? '')}" ${f.ro ? 'readonly' : ''} ${f.list ? `list="dl_${f.k}"` : ''} ${f.step ? `step="${f.step}"` : ''}>${f.list ? `<datalist id="dl_${f.k}">${f.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : ''}`;
+  }
+  return `<div class="fld"><label class="l" for="${id}">${esc(f.t)}${f.req ? ' <span style="color:var(--rose-ink)">*</span>' : ''}</label>${inner}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}</div>`;
+}
+function collect() {
+  const o = Object.assign({}, DR.v);
+  $('dBody').querySelectorAll('[data-f]').forEach(el => {
+    const k = el.dataset.f;
+    if (el.type === 'checkbox') o[k] = el.checked;
+    else if (el.type === 'radio') { if (el.checked) o[k] = el.value; }
+    else o[k] = el.value;
+  });
+  if ('student_label' in o) o.student_id = stuIdFromLabel(o.student_label);
+  const cs = $('dBody').querySelectorAll('[data-course]');
+  if (DR.fields.some(f => f.type === 'courses')) o.course_ids = [...cs].filter(x => x.checked).map(x => x.dataset.course);
+  const ms = $('dBody').querySelectorAll('[data-meal]');
+  if (ms.length) { o.meals = {}; ms.forEach(x => o.meals[x.dataset.meal] = x.value); }
+  return o;
+}
+$('dBody').onchange = e => {
+  if (!DR) return;
+  const f = DR.fields.find(x => x.k === e.target.dataset.f);
+  if (f?.rerender) { DR.v = collect(); drawForm(); }
+};
+$('dFoot').onclick = async e => {
+  if (!DR) return;
+  const { tb } = DR, t = e.target;
+  if (t.id === 'dSave') {
+    const o = collect();
+    const err = tb.cfg.validate?.(o, DR.isNew);
+    if (err) return toast(err, true);
+    t.disabled = true;
+    try { await tb.cfg.onSave(o, DR.isNew, DR.row); toast('已儲存'); closeDrawer(); await tb.reload(); }
+    catch (x) { toast(x.message, true); t.disabled = false; }
+    return;
+  }
+  if (t.id === 'dDel') {
+    const c = $('dConfirm'); c.hidden = false;
+    c.innerHTML = `<div class="confirmbar"><span>${esc(tb.cfg.deleteWarn ? tb.cfg.deleteWarn(DR.row) : '確定要刪除這一筆嗎？刪除後無法復原。')}</span><span class="spacer"></span>
+      <button type="button" class="btn ghost sm" data-no>不要刪除</button><button type="button" class="btn danger sm" data-yes>確定刪除</button></div>`;
+    return;
+  }
+  if (t.hasAttribute('data-no')) { $('dConfirm').hidden = true; return; }
+  if (t.hasAttribute('data-yes')) {
+    t.disabled = true;
+    try { await tb.cfg.onDelete(DR.row); toast('已刪除'); closeDrawer(); await tb.reload(); }
+    catch (x) { toast(x.message, true); t.disabled = false; }
+    return;
+  }
+  const da = t.closest('[data-da]');
+  if (da) {
+    const a = DR.acts[+da.dataset.da];
+    try {
+      const msg = await a.run(DR.row, collect());
+      if (a.close !== false) { closeDrawer(); await tb.reload(); }
+      if (msg) toast(msg);
+    } catch (x) { toast(x.message, true); }
+  }
+};
+async function copyText(t, okMsg) {
+  try { await navigator.clipboard.writeText(t); return okMsg; } catch { throw new Error('瀏覽器不允許複製，請手動選取文字'); }
+}
+
+/* ===== 各模組的表格設定 ===== */
+const CH = {
+  status: { '報名中': 'c-ok', '已取消': 'c-cx' },
+  aff: { '金牌班內生': 'c-in', '班外生': 'c-out' },
+  action: { '加選': 'c-ok', '退選': 'c-cx', '匯入': 'c-lilac', '建立': 'c-ok', '取消': 'c-cx', '後台新增': 'c-ok', '後台修改': 'c-lilac', '修改學費': 'c-lilac', '更新': 'c-in' },
+  att: { '全部出席': 'c-ok', '部分出席': 'c-lilac', '全部缺席': 'c-cx', '未點名': 'c-grey' },
+};
+const reqText = (o, k, label) => (!o[k] || !String(o[k]).trim()) ? `請填寫${label}` : null;
+const scopeRows = rows => (rows || []).filter(r => !S.tbatch || r.batch === S.tbatch);
+
+const TABLES = {
+  registrations: () => ({
+    key: 'registrations', title: '報名總表', item: '報名', id: 'registration_id',
+    load: () => rpc('admin_list', { p_key: 'registrations', p_category: S.cat, p_batch: S.tbatch || null }),
+    sort: { k: 'created_at', d: -1 },
+    note: '點一列可以修改。只是不來上課請用「取消報名」，資料會保留；「刪除」會把整筆報名拿掉。',
+    empty: '這個活動還沒有人報名',
+    rowClass: r => r.status === '已取消' ? 'cx' : '',
+    cols: [
+      { k: 'status', t: '狀態', type: 'chip', chips: CH.status },
+      { k: 'batch', t: '場次', type: 'chip' },
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
+      { k: 'school', t: '學校' },
+      { k: 'parent_phone', t: '家長手機' },
+      { k: 'applicant_role', t: '填表人', type: 'chip' },
+      { k: 'email', t: '登入 Email' },
+      { k: 'subject_count', t: '科目數', type: 'num' },
+      { k: 'subjects', t: '報名科目', type: 'wrap' },
+      { k: 'meal', t: '中餐' },
+      { k: 'memo', t: '備註', type: 'wrap' },
+      { k: 'source', t: '來源', type: 'chip', hide: true },
+      { k: 'log_count', t: '修改次數', type: 'num', hide: true },
+      { k: 'created_at', t: '報名時間', type: 'dt' },
+      { k: 'updated_at', t: '最後修改', type: 'dt', hide: true },
+    ],
+    bulk: [
+      { label: '批次取消報名', run: async (rows, tb) => {
+          const xs = rows.filter(r => r.status === '報名中');
+          if (!xs.length) return toast('選取的報名都已經是取消狀態', true);
+          if (!confirm(`確定取消這 ${xs.length} 筆報名？資料會保留，之後可以恢復。`)) return;
+          try { for (const r of xs) await rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '已取消' }); toast(`已取消 ${xs.length} 筆報名`); }
+          catch (e) { toast(e.message, true); }
+          tb.sel.clear(); await tb.reload();
+        } },
+      { label: '複製提醒訊息', run: async rows => {
+          const xs = rows.filter(r => r.reminder);
+          if (!xs.length) return toast('選取的報名沒有可用的提醒訊息', true);
+          try { toast(await copyText(xs.map(r => r.reminder).join('\n\n——————\n\n'), `已複製 ${xs.length} 則提醒訊息`)); } catch (e) { toast(e.message, true); }
+        } },
+    ],
+    defaults: () => ({ category: S.cat, batch: S.tbatch || firstBatch(), affiliation: '金牌班內生', applicant_role: '家長', course_ids: [], meals: {} }),
+    prepare: async v => {
+      await lookups(); await coursesOf(v.category || S.cat);
+      if (v.name && !v.student_name) v.student_name = v.name;
+      if (v.student_id) { const s = LOOK.students.find(x => x.id === v.student_id); if (s) v.student_label = stuLabel(s); }
+    },
+    form: (v, isNew) => {
+      const cs = COURSES.filter(c => c.batch === v.batch);
+      const dates = [...new Set(cs.map(c => c.course_date))].sort();
+      const batches = [...new Set(COURSES.map(c => c.batch).filter(Boolean))].sort();
+      return [
+        isNew ? { k: 'batch', t: '場次', type: 'radio', opts: batches, rerender: true, req: true }
+              : { t: '場次', type: 'ro', val: `${v.batch}（場次只能由家長在報名表自行更換）` },
+        { k: 'affiliation', t: '班內／班外', type: 'radio', opts: ['金牌班內生', '班外生'], rerender: true, req: true },
+        v.affiliation === '金牌班內生'
+          ? { k: 'student_label', t: '學生（從學生名單選）', type: 'student', req: true, hint: '打字搜尋。名單裡沒有的話，先到「學生名單」新增。' }
+          : { k: 'student_name', t: '學生姓名', req: true },
+        { k: 'school', t: '學校', list: SCHOOLS },
+        { k: 'parent_phone', t: '家長手機', type: 'tel', hint: '09 開頭，共 10 碼' },
+        { k: 'applicant_role', t: '填表人', type: 'radio', opts: ['家長', '學生'] },
+        { k: 'email', t: '登入 Email', type: 'email', hint: '家長用這個 Email 登入報名表，才看得到這筆報名' },
+        { k: 'courses', t: '報名科目', type: 'courses', sel: v.course_ids || [],
+          list: cs.map(c => ({ id: c.course_id, label: `${c.name}　${md(c.course_date)} ${c.start_time}–${c.end_time}` })) },
+        { k: 'meals', t: '每日中餐', type: 'meals', val: v.meals || {}, days: dates.map(d => ({ date: d, label: md(d) })),
+          hint: '當天上午和下午都有課（跨中午）才會訂餐，其他情況系統會自動改成不訂餐。' },
+        { k: 'memo', t: '備註', type: 'textarea' },
+      ];
+    },
+    validate: o => {
+      if (!o.batch) return '請選擇場次';
+      if (o.affiliation === '金牌班內生' && !o.student_id) return '請從學生名單選擇學生（要點選下拉出現的名字）';
+      if (o.affiliation === '班外生' && (o.student_name || '').trim().length < 2) return '請填寫學生姓名';
+      if (o.parent_phone && !/^09\d{8}$/.test(o.parent_phone.replace(/\D/g, ''))) return '家長手機格式不正確';
+      if (!o.course_ids?.length) return '請至少選一個科目';
+      return null;
+    },
+    onSave: (o, isNew, row) => rpc('admin_save_registration', { p: {
+      registration_id: isNew ? null : row.registration_id, category: o.category || S.cat, batch: o.batch,
+      affiliation: o.affiliation, student_id: o.affiliation === '金牌班內生' ? o.student_id : null,
+      student_name: o.affiliation === '班外生' ? o.student_name : null, school: o.school, parent_phone: (o.parent_phone || '').replace(/\D/g, ''),
+      applicant_role: o.applicant_role, email: o.email, course_ids: o.course_ids, meals: o.meals, memo: o.memo } }),
+    onDelete: r => rpc('admin_delete_registration', { p_reg: r.registration_id }),
+    deleteWarn: r => `確定永久刪除「${r.name}」這筆報名？選課、訂餐、座位、修改紀錄都會一起刪除（系統會自動備份一份）。`,
+    actions: (row, isNew) => isNew ? [] : [
+      row.status === '報名中'
+        ? { label: '取消報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '已取消' }).then(() => '已取消報名') }
+        : { label: '恢復報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '報名中' }).then(() => '已恢復報名，請確認科目') },
+      row.reminder ? { label: '複製提醒訊息', close: false, run: r => copyText(r.reminder, '已複製提醒訊息') } : null,
+      { label: '加退選紀錄', close: false, run: r => { S.jump = r.name; location.hash = 'item_history'; } },
+    ],
+  }),
+
+  item_history: () => ({
+    key: 'item_history', title: '加退選紀錄', item: '紀錄', id: 'history_id',
+    load: () => rpc('admin_list', { p_key: 'item_history', p_category: S.cat, p_batch: S.tbatch || null }),
+    sort: { k: 'created_at', d: -1 },
+    note: '每次加選、退選都會自動記一筆，不能修改。家長在報名表自己改的，來源是「報名表」。',
+    empty: '還沒有加退選紀錄',
+    cols: [
+      { k: 'created_at', t: '時間', type: 'dt' },
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
+      { k: 'batch', t: '場次', type: 'chip' },
+      { k: 'course_name', t: '科目' },
+      { k: 'course_date', t: '上課日', type: 'date' },
+      { k: 'start_time', t: '上課時間', get: r => hm(r.start_time) },
+      { k: 'action', t: '動作', type: 'chip', chips: CH.action },
+      { k: 'source', t: '來源', type: 'chip' },
+      { k: 'actor', t: '操作者' },
+    ],
+  }),
+
+  logs: () => ({
+    key: 'logs', title: '修改紀錄', item: '紀錄', id: 'log_id',
+    load: () => rpc('admin_list', { p_key: 'logs', p_category: S.cat, p_batch: S.tbatch || null }),
+    sort: { k: 'created_at', d: -1 },
+    note: '每次送出或修改報名，系統都會存一份當下的完整內容，不能修改。',
+    cols: [
+      { k: 'created_at', t: '時間', type: 'dt' },
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'batch', t: '場次', type: 'chip' },
+      { k: 'action', t: '動作', type: 'chip', chips: CH.action },
+      { k: 'email', t: '操作者' },
+      { k: 'status', t: '當時狀態', type: 'chip', chips: CH.status },
+      { k: 'subjects', t: '當時科目', type: 'wrap' },
+      { k: 'meals', t: '當時中餐' },
+      { k: 'parent_phone', t: '家長手機', hide: true },
+      { k: 'school', t: '學校', hide: true },
+      { k: 'memo', t: '備註', type: 'wrap', hide: true },
+    ],
+  }),
+
+  students: () => ({
+    key: 'students', title: '學生名單', item: '學生', id: 'student_id',
+    load: () => rpc('admin_list', { p_key: 'students' }),
+    note: '報名表的「金牌班內生」從這份名單搜尋。學生不提供刪除，畢業或離班請取消「在學」。',
+    cols: [
+      { k: 'name', t: '姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'school_name', t: '學校' },
+      { k: 'entry_year', t: '入學年', type: 'num' },
+      { k: 'is_active', t: '在學', type: 'bool' },
+      { k: 'parent', t: '家長' },
+      { k: 'parent_phone', t: '家長電話' },
+      { k: 'phone', t: '學生電話', hide: true },
+      { k: 'email', t: 'Email', hide: true },
+      { k: 'line_id', t: 'LINE', hide: true },
+      { k: 'kaocai_count', t: '考猜報名', type: 'num' },
+      { k: 'created_at', t: '建立時間', type: 'dt', hide: true },
+    ],
+    defaults: () => ({ is_active: true }),
+    form: () => [
+      { k: 'name', t: '姓名', req: true },
+      { k: 'school_name', t: '學校', list: SCHOOLS },
+      { k: 'entry_year', t: '入學年（西元）', type: 'number', hint: '例如 2024' },
+      { k: 'is_active', t: '在學', type: 'bool', on: '目前在學（報名表搜尋得到）' },
+      { k: 'phone', t: '學生電話', type: 'tel' },
+      { k: 'email', t: '學生 Email', type: 'email' },
+      { k: 'line_id', t: 'LINE ID' },
+    ],
+    validate: o => (o.name || '').trim().length < 2 ? '請填寫學生姓名' : null,
+    onSave: async (o, isNew, row) => { await rpc('admin_save_student', { p: { ...o, student_id: isNew ? null : row.student_id } }); LOOK = null; },
+  }),
+
+  courses: () => ({
+    key: 'courses', title: '課程設定', item: '課程', id: 'course_id',
+    load: async () => scopeRows(await coursesOf(S.cat, true)),
+    sort: { k: 'course_date', d: 1 },
+    note: '已經有人報名的課，不能改活動和場次（要換場次請家長在報名表自己改）。',
+    empty: '這個活動還沒有課程',
+    cols: [
+      { k: 'batch', t: '場次', type: 'chip' },
+      { k: 'name', t: '課程名稱', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'course_date', t: '日期', type: 'date' },
+      { k: 'time', t: '時間', get: r => `${r.start_time}–${r.end_time}` },
+      { k: 'teacher', t: '老師' },
+      { k: 'subject', t: '科目分類', hide: true },
+      { k: 'classroom', t: '教室' },
+      { k: 'enrolled', t: '報名人數', type: 'num' },
+      { k: 'sort', t: '排序', type: 'num', hide: true },
+      { k: 'description', t: '描述', type: 'wrap', hide: true },
+      { k: 'video_url', t: '影片連結', hide: true },
+      { k: 'materials', t: '教材', type: 'wrap', hide: true },
+      { k: 'category', t: '活動', hide: true },
+    ],
+    defaults: () => ({ category: S.cat, batch: S.tbatch || firstBatch(), sort: 0 }),
+    prepare: async () => { await lookups(); },
+    form: (v, isNew) => {
+      const locked = !isNew && v.enrolled > 0;
+      const batches = [...new Set((COURSES || []).map(c => c.batch).filter(Boolean))].sort();
+      return [
+        locked ? { t: '活動／場次', type: 'ro', val: `${v.category}・${v.batch}（已有 ${v.enrolled} 人報名，不能修改）` } : null,
+        locked ? null : { k: 'category', t: '活動', type: 'select', blank: false, opts: LOOK.categories, req: true },
+        locked ? null : { k: 'batch', t: '場次', list: batches, req: true, hint: '例如 5/2-5/3；打新的名稱就會新增一個場次' },
+        { k: 'name', t: '課程名稱', req: true, list: ['國文', '英文', '數學', '自然', '社會', '作文'] },
+        { k: 'course_date', t: '日期', type: 'date', req: true },
+        { k: 'start_time', t: '上課時間', type: 'time', req: true },
+        { k: 'end_time', t: '下課時間', type: 'time', req: true },
+        { k: 'teacher_id', t: '授課老師', type: 'select', opts: LOOK.teachers.map(t => ({ v: t.id, t: t.name })) },
+        { k: 'subject_id', t: '科目分類', type: 'select', opts: LOOK.subjects.map(t => ({ v: t.id, t: t.name })) },
+        { k: 'classroom_id', t: '教室', type: 'select', opts: LOOK.classrooms.map(t => ({ v: t.id, t: t.name })), hint: '座位表會用這間教室的座位格局' },
+        { k: 'sort', t: '排序', type: 'number', hint: '數字小的排前面' },
+        { k: 'description', t: '描述', type: 'textarea' },
+        { k: 'video_url', t: '影片連結', type: 'url' },
+        { k: 'materials', t: '教材', type: 'textarea' },
+      ];
+    },
+    validate: o => reqText(o, 'name', '課程名稱') || reqText(o, 'batch', '場次') || reqText(o, 'course_date', '日期')
+      || reqText(o, 'start_time', '上課時間') || reqText(o, 'end_time', '下課時間') || (o.end_time <= o.start_time ? '下課時間要晚於上課時間' : null),
+    onSave: async (o, isNew, row) => {
+      await rpc('admin_save_course', { p: { ...o, course_id: isNew ? null : row.course_id } });
+      COURSES = null; await loadBootstrap();
+    },
+    onDelete: async r => { await rpc('admin_remove', { p_key: 'courses', p_id: r.course_id }); COURSES = null; await loadBootstrap(); },
+    deleteWarn: r => `確定刪除「${r.batch} ${r.name}」這堂課？`,
+  }),
+
+  categories: () => ({
+    key: 'categories', title: '活動種類', item: '活動', id: 'category',
+    load: () => rpc('admin_list', { p_key: 'categories' }),
+    note: '每個活動（例如 2026會考考猜）一列。「開放報名」關掉後，家長就不能再報名或修改。',
+    cols: [
+      { k: 'category', t: '活動名稱', html: r => `<b>${esc(r.category)}</b>` },
+      { k: 'reg_open', t: '開放報名', type: 'bool' },
+      { k: 'location', t: '上課地點', type: 'wrap' },
+      { k: 'batches', t: '場次' },
+      { k: 'registrations', t: '報名人數', type: 'num' },
+      { k: 'created_at', t: '建立時間', type: 'dt', hide: true },
+    ],
+    defaults: () => ({ reg_open: false }),
+    form: (v, isNew) => [
+      isNew ? { k: 'category', t: '活動名稱', req: true, hint: '例如 2027會考考猜。建立後不能改名。' } : { t: '活動名稱', type: 'ro', val: v.category },
+      { k: 'location', t: '上課地點', type: 'textarea', hint: '會顯示在報名表和提醒訊息裡' },
+      { k: 'reg_open', t: '開放報名', type: 'bool', on: '開放家長報名和修改' },
+    ],
+    validate: o => reqText(o, 'category', '活動名稱'),
+    onSave: async (o, isNew, row) => { await rpc('admin_save_category', { p: { ...o, _old_category: isNew ? null : row.category } }); LOOK = null; await loadBootstrap(); },
+    onDelete: async r => { await rpc('admin_remove', { p_key: 'categories', p_id: r.category }); LOOK = null; await loadBootstrap(); },
+    deleteWarn: r => `確定刪除「${r.category}」？只有沒有課程、也沒有報名的活動可以刪除。`,
+  }),
+
+  layouts: () => ({
+    key: 'layouts', title: '教室座位格局', item: '座位格局', id: 'classroom_id', canAdd: false,
+    load: () => rpc('admin_list', { p_key: 'layouts' }),
+    note: '座位表依這裡的排數、列數畫座位。走道填列的編號，例如「5,10」代表第 5、10 列是走道。',
+    cols: [
+      { k: 'classroom', t: '教室', html: r => `<b>${esc(r.classroom)}</b>` },
+      { k: 'capacity', t: '容納人數', type: 'num' },
+      { k: 'seat_rows', t: '排數', type: 'num' },
+      { k: 'seat_cols', t: '列數', type: 'num' },
+      { k: 'aisle_cols', t: '走道列' },
+      { k: 'door_label', t: '門口標示' },
+    ],
+    form: v => [
+      { t: '教室', type: 'ro', val: v.classroom },
+      { k: 'seat_rows', t: '排數（前後）', type: 'number', req: true },
+      { k: 'seat_cols', t: '列數（左右，含走道）', type: 'number', req: true },
+      { k: 'aisle_cols', t: '走道在第幾列', hint: '用逗號分開，例如 5,10' },
+      { k: 'door_label', t: '門口標示', hint: '顯示在座位表左上角' },
+    ],
+    defaults: () => ({ seat_rows: 6, seat_cols: 14, door_label: '門口' }),
+    prepare: async v => { v.seat_rows ??= 6; v.seat_cols ??= 14; v.door_label ??= '門口'; },
+    onSave: (o, isNew, row) => rpc('admin_save_layout', { p: { ...o, classroom_id: row.classroom_id } }),
+  }),
+
+  attendance_fee: () => ({
+    key: 'attendance_fee', title: '出席與學費', item: '學費', id: 'registration_id', canAdd: false,
+    load: () => rpc('admin_list', { p_key: 'attendance_fee', p_category: S.cat, p_batch: S.tbatch || null }),
+    note: '應收依「學費規則」用報名科目數自動計算。待收＝應收＋調整－已收。點一列登記收費。',
+    rowClass: r => r.status === '已取消' ? 'cx' : '',
+    cols: [
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'batch', t: '場次', type: 'chip' },
+      { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
+      { k: 'school', t: '學校', hide: true },
+      { k: 'status', t: '狀態', type: 'chip', chips: CH.status },
+      { k: 'registered', t: '報名科數', type: 'num' },
+      { k: 'attended', t: '出席科數', type: 'num' },
+      { k: 'attendance_status', t: '出席狀況', type: 'chip', chips: CH.att },
+      { k: 'fee_expected', t: '應收', type: 'money', sum: true },
+      { k: 'fee_adjust', t: '調整', type: 'money', sum: true },
+      { k: 'fee_prepaid', t: '已收', type: 'money', sum: true },
+      { k: 'due', t: '待收', type: 'money', sum: true, get: r => r.status === '已取消' ? 0 : (Number(r.fee_expected) || 0) + (Number(r.fee_adjust) || 0) - (Number(r.fee_prepaid) || 0) },
+      { k: 'fee_note', t: '收費備註', type: 'wrap' },
+    ],
+    form: v => [
+      { t: '學生', type: 'ro', val: `${v.name}（${v.batch}・報名 ${v.registered} 科）` },
+      { t: '應收', type: 'ro', val: v.fee_expected == null ? '學費規則沒有對應的金額' : fmt.money(v.fee_expected) + ' 元' },
+      { k: 'fee_prepaid', t: '已收金額', type: 'number' },
+      { k: 'fee_adjust', t: '調整金額', type: 'number', hint: '折扣請填負數，例如 -200；加收填正數' },
+      { k: 'fee_note', t: '收費備註', type: 'textarea', hint: '例如：現金、轉帳末五碼、收據號碼' },
+    ],
+    onSave: (o, isNew, row) => rpc('admin_save_fee', { p: { registration_id: row.registration_id, fee_prepaid: o.fee_prepaid, fee_adjust: o.fee_adjust, fee_note: o.fee_note } }),
+  }),
+
+  fee_rules: () => ({
+    key: 'fee_rules', title: '學費規則', item: '學費規則', id: 'id',
+    load: () => rpc('admin_list', { p_key: 'fee_rules', p_category: S.cat }),
+    note: '依報名科目數決定學費。例如 1–3 科 1200 元、4–5 科 1800 元。',
+    sort: { k: 'min_subjects', d: 1 },
+    cols: [
+      { k: 'category', t: '活動' },
+      { k: 'min_subjects', t: '最少科數', type: 'num' },
+      { k: 'max_subjects', t: '最多科數', type: 'num' },
+      { k: 'fee', t: '學費（元）', type: 'money' },
+    ],
+    defaults: () => ({ category: S.cat }),
+    prepare: async () => { await lookups(); },
+    form: () => [
+      { k: 'category', t: '活動', type: 'select', blank: false, opts: LOOK.categories },
+      { k: 'min_subjects', t: '最少科數', type: 'number', req: true },
+      { k: 'max_subjects', t: '最多科數', type: 'number', req: true },
+      { k: 'fee', t: '學費（元）', type: 'number', req: true },
+    ],
+    validate: o => reqText(o, 'min_subjects', '最少科數') || reqText(o, 'max_subjects', '最多科數') || reqText(o, 'fee', '學費'),
+    onSave: (o, isNew, row) => rpc('admin_save_fee_rule', { p: { ...o, id: isNew ? null : row.id } }),
+    onDelete: r => rpc('admin_remove', { p_key: 'fee_rules', p_id: String(r.id) }),
+  }),
+
+  exam_results: () => ({
+    key: 'exam_results', title: '會考成績', item: '會考成績', id: 'id',
+    load: () => rpc('admin_list', { p_key: 'exam_results' }),
+    sort: { k: 'year', d: -1 },
+    note: '標籤空白時，系統依成績自動算出「nA m+」。建議紅包依 A 的數量自動計算，實際發放金額填在「紅包」。',
+    cols: [
+      { k: 'year', t: '年度', type: 'num' },
+      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'chinese', t: '國文' }, { k: 'english', t: '英文' }, { k: 'math', t: '數學' },
+      { k: 'science', t: '自然' }, { k: 'social', t: '社會' }, { k: 'essay', t: '作文' },
+      { k: 'label', t: '榜單標籤', type: 'chip' },
+      { k: 'a_count', t: 'A 數', type: 'num', hide: true },
+      { k: 'plus_count', t: '+ 數', type: 'num', hide: true },
+      { k: 'red_envelope_suggested', t: '建議紅包', type: 'money', sum: true },
+      { k: 'red_envelope', t: '紅包', type: 'money', sum: true },
+      { k: 'received', t: '領取' },
+      { k: 'parent', t: '家長', hide: true },
+      { k: 'learning_note', t: '學習備註', type: 'wrap', hide: true },
+    ],
+    defaults: () => ({ year: new Date().getFullYear() }),
+    prepare: async v => { await lookups(); if (v.student_id) { const s = LOOK.students.find(x => x.id === v.student_id); if (s) v.student_label = stuLabel(s); } },
+    form: v => [
+      { k: 'student_label', t: '學生', type: 'student', req: true },
+      { k: 'year', t: '會考年度（西元）', type: 'number', req: true },
+      { k: 'chinese', t: '國文', hint: '例如 A++、A+、A、B++' }, { k: 'english', t: '英文' }, { k: 'math', t: '數學' },
+      { k: 'science', t: '自然' }, { k: 'social', t: '社會' }, { k: 'essay', t: '作文', hint: '級分，例如 6' },
+      { k: 'honor_label', t: '榜單標籤（選填）', hint: '空白就用系統自動算的標籤' + (v.label ? `，目前是「${v.label}」` : '') },
+      { k: 'red_envelope', t: '紅包金額', type: 'number', hint: v.red_envelope_suggested != null ? `系統建議 ${v.red_envelope_suggested} 元` : '' },
+      { k: 'received', t: '領取狀態', list: ['已領', '未領'] },
+      { k: 'learning_note', t: '學習備註', type: 'textarea' },
+    ],
+    validate: o => !o.student_id ? '請從名單選擇學生（要點選下拉出現的名字）' : reqText(o, 'year', '年度'),
+    onSave: (o, isNew, row) => rpc('admin_save_exam_result', { p: { ...o, id: isNew ? null : row.id } }),
+    onDelete: r => rpc('admin_remove', { p_key: 'exam_results', p_id: String(r.id) }),
+    deleteWarn: r => `確定刪除 ${r.name} ${r.year} 年的會考成績？`,
+  }),
+};
+
+const TB = {};
+const SUBTABS = {
+  courses: [['courses', '課程'], ['categories', '活動種類'], ['layouts', '教室座位格局']],
+  attendance_fee: [['attendance_fee', '出席與學費'], ['fee_rules', '學費規則']],
+};
+S.sub = {};
+async function openTablePage(page) {
+  const tabs = SUBTABS[page];
+  const key = tabs ? (S.sub[page] || tabs[0][0]) : page;
+  $('subtabs').hidden = !tabs;
+  $('subtabs').innerHTML = tabs ? tabs.map(([k, t]) => `<button type="button" class="pill ${k === key ? 'on' : ''}" data-sub="${k}">${t}</button>`).join('') : '';
+  if (!TB[key]) TB[key] = new DataTable(TABLES[key]());
+  const tb = TB[key];
+  if (S.jump && key === 'item_history') { tb.filters = { name: S.jump }; tb.q = ''; S.jump = null; }
+  tb.host = $('dtHost'); tb.bind();
+  await tb.reload();
+}
+$('subtabs').onclick = e => { const b = e.target.closest('[data-sub]'); if (!b) return; S.sub[S.page] = b.dataset.sub; openTablePage(S.page).catch(x => toast(x.message, true)); };
 
 /* ===== 啟動 ===== */
 let lastUser;
