@@ -251,8 +251,15 @@
         <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>點名</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
       </div>
       <div id="mealView" hidden>
-        <div class="tools"><button class="btn ghost sm" id="copyMeal">複製訂餐摘要</button></div>
-        <div class="mealgrid" id="mealLists"></div>
+        <div class="pills" id="mealDays" style="margin-bottom:8px"></div>
+        <div class="muted" id="mealInfo" style="margin-bottom:10px"></div>
+        <div class="tools">
+          <input class="in" id="mealSearch" placeholder="搜尋姓名、學校">
+          <span class="spacer"></span>
+          <button class="btn ghost sm" id="copyMeal">複製訂餐摘要</button>
+          <button class="btn ghost sm" id="mealCsv">匯出 CSV</button>
+        </div>
+        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>餐點</th><th>取餐</th></tr></thead><tbody id="mealRows"></tbody></table></div>
       </div>
     </section>
 
@@ -535,15 +542,59 @@ $('csv').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = `點名表_${c?.course_name || ''}_${S.batch}.csv`; a.click();
 };
-function renderMeals() {
-  $('mealLists').innerHTML = BOARD.meal_counts.map(m => {
-    const list = BOARD.meal_list.filter(x => x.course_date === m.course_date);
-    const g = k => list.filter(x => x.meal === k).map(x => `<li>${esc(x.name)}${x.affiliation === '班外生' ? ' <span class="chip c-out">班外</span>' : ''}</li>`).join('');
-    return `<div class="card mealday"><h3>${md(m.course_date)}</h3>
-      <div class="muted">葷食 ${m.meat} 份</div><ul>${g('葷食') || '<li class="muted">無</li>'}</ul>
-      <div class="muted" style="margin-top:8px">素食 ${m.veg} 份</div><ul>${g('素食') || '<li class="muted">無</li>'}</ul></div>`;
-  }).join('');
+// 訂餐名單：一天一張表，只列有訂餐的學生
+S.mealDay = null; S.mealQ = '';
+function mealDays() { return [...new Set(BOARD.meal_counts.map(m => m.course_date))].sort(); }
+function mealRowsOf(day) {
+  let rows = BOARD.meal_list.filter(x => x.course_date === day && x.meal !== '不訂餐');
+  if (S.mealQ) rows = rows.filter(x => (x.name + (x.school || '')).includes(S.mealQ));
+  return rows.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));   // 不依取餐狀態排序，避免點了之後整列跳走
 }
+function renderMeals() {
+  const days = mealDays();
+  if (!days.includes(S.mealDay)) S.mealDay = days[0] || null;
+  $('mealDays').innerHTML = days.map(d => `<button type="button" class="pill ${d === S.mealDay ? 'on' : ''}" data-day="${d}">${md(d)}</button>`).join('');
+  if (!S.mealDay) { $('mealInfo').textContent = '這個場次沒有需要訂餐的日子'; $('mealRows').innerHTML = ''; return; }
+  const all = BOARD.meal_list.filter(x => x.course_date === S.mealDay && x.meal !== '不訂餐');
+  const n = k => all.filter(x => x.meal === k).length, got = all.filter(x => x.picked_up).length;
+  $('mealInfo').textContent = `${md(S.mealDay)}・葷食 ${n('葷食')} 份・素食 ${n('素食')} 份・已取餐 ${got}／${all.length}`;
+  const rows = mealRowsOf(S.mealDay);
+  $('mealRows').innerHTML = rows.map((r, i) => `<tr>
+      <td>${i + 1}</td><td class="nm"><b>${esc(r.name)}</b></td>
+      <td><span class="chip ${r.affiliation === '班外生' ? 'c-out' : 'c-in'}">${r.affiliation === '班外生' ? '班外' : '班內'}</span></td>
+      <td>${esc(r.school || '')}</td><td>${esc(r.parent_phone || '')}</td>
+      <td><select class="meal" data-mreg="${r.registration_id}">${['葷食', '素食', '不訂餐'].map(m => `<option ${r.meal === m ? 'selected' : ''}>${m}</option>`).join('')}</select></td>
+      <td><span class="att" data-pick="${r.registration_id}">
+        <button class="u ${r.picked_up ? '' : 'on'}" data-v="false">未取餐</button>
+        <button class="y ${r.picked_up ? 'on' : ''}" data-v="true">已取餐</button></span></td></tr>`).join('')
+    || `<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">${all.length ? '沒有符合搜尋的學生' : '這天沒有人訂餐'}</td></tr>`;
+}
+$('mealDays').onclick = e => { const b = e.target.closest('[data-day]'); if (!b) return; S.mealDay = b.dataset.day; renderMeals(); };
+$('mealSearch').oninput = () => { S.mealQ = $('mealSearch').value.trim(); renderMeals(); };
+$('mealRows').onclick = async e => {
+  const btn = e.target.closest('[data-pick] button'); if (!btn) return;
+  const reg = btn.parentElement.dataset.pick, v = btn.dataset.v === 'true';
+  const r = BOARD.meal_list.find(x => x.registration_id === reg && x.course_date === S.mealDay);
+  const old = r.picked_up; r.picked_up = v; renderMeals();
+  try { await rpc('admin_set_meal_pickup', { p_reg: reg, p_date: S.mealDay, p_picked: v }); }
+  catch (err) { r.picked_up = old; renderMeals(); toast(err.message, true); }
+};
+$('mealRows').onchange = async e => {
+  const sel = e.target.closest('[data-mreg]'); if (!sel) return;
+  try {
+    await rpc('admin_set_meal', { p_reg: sel.dataset.mreg, p_date: S.mealDay, p_meal: sel.value });
+    toast(sel.value === '不訂餐' ? '已改成不訂餐，從名單移除' : '餐點已更新');
+  } catch (err) { toast(err.message, true); }
+  await loadBoard();
+};
+$('mealCsv').onclick = () => {
+  const rows = mealRowsOf(S.mealDay);
+  const head = ['序號', '姓名', '班別', '學校', '家長電話', '餐點', '取餐'];
+  const lines = rows.map((r, i) => [i + 1, r.name, r.affiliation, r.school, r.parent_phone, r.meal, r.picked_up ? '已取餐' : '未取餐']);
+  const csv = '\ufeff' + [head, ...lines].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `訂餐名單_${S.mealDay}.csv`; a.click();
+};
 $('copyMeal').onclick = () => navigator.clipboard.writeText(BOARD.meal_counts.map(m => `${md(m.course_date)} 葷食 ${m.meat} 份、素食 ${m.veg} 份`).join('\n')).then(() => toast('已複製訂餐摘要'));
 
 /* ===== 座位表 ===== */
