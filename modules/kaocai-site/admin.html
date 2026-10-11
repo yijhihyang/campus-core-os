@@ -215,6 +215,15 @@
   .fld label.l{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
   .fld .in{padding:8px 10px}
   .fld textarea.in{min-height:70px;resize:vertical}
+  .blist{display:flex;flex-direction:column;gap:8px}
+  .brow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:start;background:var(--grey);border-radius:12px;padding:8px}
+  .brow .n{font-size:12px;color:var(--muted);padding-top:9px;text-align:center}
+  .brow .in{background:#fff}
+  .brow textarea.in{min-height:44px;margin-top:6px}
+  .brow .meta{font-size:12px;color:var(--muted);margin-top:4px}
+  .brow .x{border:0;background:none;color:var(--rose-ink);font-size:13px;padding:8px 4px}
+  .brow .x:disabled{color:var(--muted);cursor:not-allowed}
+  .bempty{background:var(--grey);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--muted)}
   .fld .hint{font-size:12px;color:var(--muted);margin-top:3px}
   .opts{display:flex;flex-wrap:wrap;gap:6px}
   .opts label{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;font-size:14px;cursor:pointer}
@@ -275,7 +284,7 @@
     <div class="sec">行政</div>
     <a href="#changes" data-page="changes">資料異動審核 <span class="chip c-cx" id="chgBadge" hidden></span></a>
     <a href="#students" data-page="students">學生名單</a>
-    <a href="#courses" data-page="courses">課程設定</a>
+    <a href="#courses" data-page="courses">活動與課程</a>
     <a href="#rooms" data-page="rooms">教室座位</a>
     <a href="#attendance_fee" data-page="attendance_fee">出席與學費</a>
     <a href="#exam_results" data-page="exam_results">會考成績</a>
@@ -459,7 +468,7 @@ async function loadBootstrap() {
   const b = await rpc('admin_bootstrap');
   CATS = b.categories;
   $('cat').innerHTML = CATS.map(c => `<option>${esc(c.category)}</option>`).join('');
-  S.cat = S.cat || CATS[0]?.category;
+  if (!CATS.some(c => c.category === S.cat)) S.cat = CATS[0]?.category;
   $('cat').value = S.cat;
   fillBatches();
 }
@@ -467,7 +476,7 @@ const TABLE_PAGES = ['registrations', 'logs', 'changes', 'students', 'courses', 
 const isTablePage = () => TABLE_PAGES.includes(S.page);
 function fillBatches() {
   const c = CATS.find(x => x.category === S.cat);
-  const bs = (c?.batches || []).slice().sort();
+  const bs = (c?.batches || []).slice();
   const all = isTablePage();
   $('batch').innerHTML = (all ? '<option value="">全部場次</option>' : '') + bs.map(b => `<option>${esc(b)}</option>`).join('');
   if (all) { if (S.tbatch !== '' && !bs.includes(S.tbatch)) S.tbatch = ''; $('batch').value = S.tbatch; }
@@ -1203,7 +1212,8 @@ const fmt = {
   money: v => (v === null || v === undefined || v === '') ? '' : Number(v).toLocaleString('zh-TW'),
 };
 const chipFor = (v, map) => (v == null || v === '') ? '' : `<span class="chip ${(map || {})[v] || 'c-grey'}">${esc(v)}</span>`;
-const firstBatch = () => (CATS.find(c => c.category === S.cat)?.batches || []).slice().sort()[0];
+const weekdayOf = d => d ? '星期' + WEEK[new Date(d + 'T00:00').getDay()] : '';
+const firstBatch = () => (CATS.find(c => c.category === S.cat)?.batches || [])[0];
 // 學生下拉只顯示姓名；同名時加上「同名第 n 位」區分
 function stuLabel(s) {
   const same = LOOK.students.filter(x => x.name === s.name);
@@ -1465,6 +1475,16 @@ $('dClose').onclick = closeDrawer;
 $('drawerBg').onclick = closeDrawer;
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && DR) closeDrawer(); });
 $('dBody').onsubmit = e => e.preventDefault();
+$('dBody').addEventListener('click', e => {
+  if (!DR) return;
+  const add = e.target.closest('[data-badd]'), del = e.target.closest('[data-bdel]');
+  if (!add && !del) return;
+  DR.v = collect();
+  if (add) DR.v.batches = [...(DR.v.batches || []), { batch: '', description: '' }];
+  else DR.v.batches = DR.v.batches.filter((_, i) => i !== +del.dataset.bdel);
+  drawForm();
+  if (add) { const xs = $('dBody').querySelectorAll('[data-bl=batch]'); xs[xs.length - 1]?.focus(); }
+});
 // Enter＝儲存（中文輸入法選字時的 Enter 不算；備註等多行欄位要換行，用 ⌘/Ctrl＋Enter 儲存）
 $('dBody').addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229 || !DR) return;
@@ -1509,6 +1529,15 @@ function fieldHtml(f, v) {
     case 'student': inner = `<input class="in" id="${id}" list="dl_stu" data-f="student_label" value="${esc(val ?? '')}" placeholder="輸入姓名搜尋">
         <datalist id="dl_stu">${LOOK.students.map(s => `<option value="${esc(stuLabel(s))}">`).join('')}</datalist>`; break;
     case 'courses': inner = `<div class="clist">${f.list.map(c => `<label><input type="checkbox" data-course="${c.id}" ${f.sel.includes(c.id) ? 'checked' : ''}> ${esc(c.label)}</label>`).join('') || '<span class="muted">這個場次還沒有課程</span>'}</div>`; break;
+    case 'batchlist': inner = `<div class="blist">${(val || []).map((b, i) => {
+        const used = (b.courses || 0) + (b.registrations || 0);
+        return `<div class="brow" data-bi="${i}"><span class="n">${i + 1}</span><div>
+          <input class="in" data-bl="batch" value="${esc(b.batch || '')}" placeholder="場次名稱，例如 5/2-5/3">
+          <textarea class="in" data-bl="description" placeholder="場次描述（可不填）">${esc(b.description || '')}</textarea>
+          ${b.old ? `<div class="meta">${b.courses || 0} 堂課・${b.registrations || 0} 人報名${b.old !== b.batch ? `・原名「${esc(b.old)}」` : ''}</div>` : '<div class="meta">新場次</div>'}</div>
+          <button type="button" class="x" data-bdel="${i}" ${used ? `disabled title="已經有課程或報名，不能刪除"` : ''}>移除</button></div>`;
+      }).join('') || `<div class="bempty">目前<b>不分場次</b>：課程直接放在活動底下，報名表也不會出現場次選項。</div>`}
+      <button type="button" class="btn ghost sm" data-badd style="align-self:flex-start">＋ 新增場次</button></div>`; break;
     case 'meals': inner = f.days.map(d => `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span style="width:96px">${esc(d.label)}</span>
         <select class="in" style="flex:1" data-meal="${d.date}" aria-label="${esc(d.label)} 中餐">${['葷食', '素食', '不訂餐'].map(m => `<option ${(f.val[d.date] || '不訂餐') === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>`).join('') || '<span class="muted">—</span>'; break;
     default: inner = `<input class="in" id="${id}" type="${f.type || 'text'}" data-f="${f.k}" value="${esc(val ?? '')}" ${f.ro ? 'readonly' : ''} ${f.list ? `list="dl_${f.k}"` : ''} ${f.step ? `step="${f.step}"` : ''}>${f.list ? `<datalist id="dl_${f.k}">${f.list.map(o => `<option value="${esc(o)}">`).join('')}</datalist>` : ''}`;
@@ -1526,6 +1555,13 @@ function collect() {
   if ('student_label' in o) o.student_id = stuIdFromLabel(o.student_label);
   const cs = $('dBody').querySelectorAll('[data-course]');
   if (DR.fields.some(f => f.type === 'courses')) o.course_ids = [...cs].filter(x => x.checked).map(x => x.dataset.course);
+  if (DR.fields.some(f => f.type === 'batchlist')) {
+    const prev = DR.v.batches || [];
+    o.batches = [...$('dBody').querySelectorAll('.brow')].map(r => {
+      const b = prev[+r.dataset.bi] || {};
+      return { ...b, batch: r.querySelector('[data-bl=batch]').value.trim(), description: r.querySelector('[data-bl=description]').value };
+    });
+  }
   const ms = $('dBody').querySelectorAll('[data-meal]');
   if (ms.length) { o.meals = {}; ms.forEach(x => o.meals[x.dataset.meal] = x.value); }
   return o;
@@ -1848,6 +1884,7 @@ const TABLES = {
       { k: 'batch', t: '場次', type: 'chip' },
       { k: 'name', t: '課程名稱', html: r => `<b>${esc(r.name)}</b>` },
       { k: 'course_date', t: '日期', type: 'date' },
+      { k: 'weekday', t: '星期', get: r => weekdayOf(r.course_date) },
       { k: 'time', t: '時間', get: r => `${r.start_time}–${r.end_time}` },
       { k: 'teacher', t: '老師' },
       { k: 'subject', t: '科目分類', hide: true },
@@ -1863,13 +1900,17 @@ const TABLES = {
     prepare: async () => { await lookups(); },
     form: (v, isNew) => {
       const locked = !isNew && v.enrolled > 0;
-      const batches = [...new Set((COURSES || []).map(c => c.batch).filter(Boolean))].sort();
+      const cat = CATS.find(c => c.category === v.category), bs = cat?.batches || [];
+      const batchField = locked ? null : cat?.implicit ? { t: '場次', type: 'ro', val: '不分場次（課程直接放在活動底下）' }
+        : bs.length ? { k: 'batch', t: '場次', type: 'select', blank: false, opts: bs, req: true, hint: '要新增或改名場次，請到「活動與場次」' }
+        : { t: '場次', type: 'ro', val: '這個活動還沒有設定場次，請先到「活動與場次」設定' };
       return [
         locked ? { t: '活動／場次', type: 'ro', val: `${v.category}・${v.batch}（已有 ${v.enrolled} 人報名，不能修改）` } : null,
-        locked ? null : { k: 'category', t: '活動', type: 'select', blank: false, opts: LOOK.categories, req: true },
-        locked ? null : { k: 'batch', t: '場次', list: batches, req: true, hint: '例如 5/2-5/3；打新的名稱就會新增一個場次' },
+        locked ? null : { k: 'category', t: '活動', type: 'select', blank: false, opts: CATS.map(c => c.category), req: true, rerender: true },
+        batchField,
         { k: 'name', t: '課程名稱', req: true, list: ['國文', '英文', '數學', '自然', '社會', '作文'] },
-        { k: 'course_date', t: '日期', type: 'date', req: true },
+        { k: 'course_date', t: '日期', type: 'date', req: true, onPick: () => {} },
+        { t: '星期', type: 'ro', val: weekdayOf(v.course_date) || '選好日期後自動帶入' },
         { k: 'start_time', t: '上課時間', type: 'time', req: true },
         { k: 'end_time', t: '下課時間', type: 'time', req: true },
         { k: 'teacher_id', t: '授課老師', type: 'select', opts: LOOK.teachers.map(t => ({ v: t.id, t: t.name })) },
@@ -1881,7 +1922,7 @@ const TABLES = {
         { k: 'materials', t: '教材', type: 'textarea' },
       ];
     },
-    validate: o => reqText(o, 'name', '課程名稱') || reqText(o, 'batch', '場次') || reqText(o, 'course_date', '日期')
+    validate: o => reqText(o, 'name', '課程名稱') || (CATS.find(c => c.category === o.category)?.implicit ? null : reqText(o, 'batch', '場次')) || reqText(o, 'course_date', '日期')
       || reqText(o, 'start_time', '上課時間') || reqText(o, 'end_time', '下課時間') || (o.end_time <= o.start_time ? '下課時間要晚於上課時間' : null),
     onSave: async (o, isNew, row) => {
       await rpc('admin_save_course', { p: { ...o, course_id: isNew ? null : row.course_id } });
@@ -1892,26 +1933,46 @@ const TABLES = {
   }),
 
   categories: () => ({
-    key: 'categories', title: '活動種類', item: '活動', id: 'category',
-    load: () => rpc('admin_list', { p_key: 'categories' }),
-    note: '每個活動（例如 2026會考考猜）一列。「開放報名」關掉後，家長就不能再報名或修改。',
+    key: 'categories', title: '活動與場次', item: '活動', id: 'category',
+    load: () => rpc('admin_activities'),
+    note: '先建立活動和場次，再到「課程」新增課程。活動可以不分場次。「開放報名」關掉後，家長就不能再報名或修改。',
     cols: [
       { k: 'category', t: '活動名稱', html: r => `<b>${esc(r.category)}</b>` },
-      { k: 'reg_open', t: '開放報名', type: 'bool' },
+      { k: 'description', t: '活動描述', type: 'wrap' },
+      { k: 'batch_names', t: '場次', get: r => r.implicit ? '不分場次' : r.batches.map(b => b.batch).join('、') },
       { k: 'location', t: '上課地點', type: 'wrap' },
-      { k: 'batches', t: '場次' },
+      { k: 'reg_open', t: '開放報名', type: 'bool' },
+      { k: 'courses', t: '課程數', type: 'num' },
       { k: 'registrations', t: '報名人數', type: 'num' },
       { k: 'created_at', t: '建立時間', type: 'dt', hide: true },
     ],
-    defaults: () => ({ reg_open: false }),
+    defaults: () => ({ reg_open: false, batches: [] }),
+    prepare: async (v, isNew) => {
+      v.batches = isNew || v.implicit ? [] : (v.batches || []).map(b => ({ ...b, old: b.batch }));
+    },
     form: (v, isNew) => [
-      isNew ? { k: 'category', t: '活動名稱', req: true, hint: '例如 2027會考考猜。建立後不能改名。' } : { t: '活動名稱', type: 'ro', val: v.category },
-      { k: 'location', t: '上課地點', type: 'textarea', hint: '會顯示在報名表和提醒訊息裡' },
+      { k: 'category', t: '活動名稱', req: true, hint: isNew ? '例如 2027會考考猜' : '改名後，底下的場次、課程、報名都會一起改' },
+      { k: 'description', t: '活動描述', type: 'textarea', hint: '會顯示在報名表上方（可不填）' },
+      { k: 'batches', t: '場次', type: 'batchlist', hint: "可以不填（不分場次），也可以新增好幾筆。前面的數字就是報名表上的順序。" },
+      { k: 'location', t: '上課地點', type: 'textarea', hint: '會顯示在報名表和提醒訊息裡（可不填）' },
       { k: 'reg_open', t: '開放報名', type: 'bool', on: '開放家長報名和修改' },
     ],
-    validate: o => reqText(o, 'category', '活動名稱'),
-    onSave: async (o, isNew, row) => { await rpc('admin_save_category', { p: { ...o, _old_category: isNew ? null : row.category } }); LOOK = null; await loadBootstrap(); },
-    onDelete: async r => { await rpc('admin_remove', { p_key: 'categories', p_id: r.category }); LOOK = null; await loadBootstrap(); },
+    validate: o => reqText(o, 'category', '活動名稱')
+      || ((o.batches || []).some(b => !b.batch) ? '場次名稱不能空白（不需要的場次請按「移除」）' : null)
+      || (new Set((o.batches || []).map(b => b.batch)).size !== (o.batches || []).length ? '場次名稱不能重複' : null),
+    onSave: async (o, isNew, row) => {
+      const cat = o.category.trim();
+      try {
+        await rpc('admin_save_activity', { p: { old_category: isNew ? null : row.category, category: cat, description: o.description, location: o.location,
+          reg_open: o.reg_open, batches: (o.batches || []).map(b => ({ old: b.old || null, batch: b.batch, description: b.description })) } });
+      } catch (e) {
+        if (/Could not find the function/i.test(e.message)) throw new Error('活動與場次的儲存功能尚未啟用，請先在 Supabase 執行「啟用活動與場次編輯.sql」');
+        throw e;
+      }
+      if (!isNew && S.cat === row.category) S.cat = cat;
+      LOOK = null; COURSES = null; await loadBootstrap();
+    },
+    onDelete: async r => { await rpc('admin_remove', { p_key: 'categories', p_id: r.category }); LOOK = null; S.cat = null; await loadBootstrap(); },
     deleteWarn: r => `確定刪除「${r.category}」？只有沒有課程、也沒有報名的活動可以刪除。`,
   }),
 
@@ -2045,7 +2106,7 @@ function setChgBadge(rows) {
 }
 const TB = {};
 const SUBTABS = {
-  courses: [['courses', '課程'], ['categories', '活動種類']],
+  courses: [['categories', '活動與場次'], ['courses', '課程']],
   attendance_fee: [['attendance_fee', '出席與學費'], ['fee_rules', '學費規則']],
 };
 // 學生名單：預設只看國三，可切換全部

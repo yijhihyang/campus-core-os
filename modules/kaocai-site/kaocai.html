@@ -95,6 +95,7 @@
     <span class="pill">會考衝刺</span>
     <h1 id="title">考前猜題報名</h1>
     <div class="loc" id="loc">載入中…</div>
+    <div class="loc" id="catDesc" hidden style="white-space:pre-line;margin-top:6px"></div>
   </header>
 
   <!-- ===== 1. Email 登入 ===== -->
@@ -162,8 +163,11 @@
       <input type="text" id="schoolOther" maxlength="20" placeholder="請輸入學校名稱" hidden style="margin-top:8px">
       <div id="schoolKeep" class="keepnote" hidden>已帶入學生資料中的學校。轉學的話直接改選，櫃台確認後會更新資料。</div>
 
-      <label class="f">報名場次</label>
-      <div class="chips" id="batches"></div>
+      <div id="batchBox">
+        <label class="f">報名場次</label>
+        <div class="chips" id="batches"></div>
+        <div class="note" id="batchDesc" hidden style="margin-top:6px"></div>
+      </div>
 
       <div class="row" style="margin-top:14px">
         <span style="font-weight:500;font-size:14px">報名科目 <small style="color:var(--muted);font-weight:400">座位有限，請優先選擇全科</small></span>
@@ -217,15 +221,20 @@ async function loadOptions() {
   if (!cats.length) { $('loc').textContent = '目前沒有開放報名的活動'; return false; }
   CAT = cats[0];
   $('title').textContent = CAT.category + ' 報名';
-  $('loc').textContent = '📍 ' + (CAT.location || '');
+  $('loc').textContent = CAT.location ? '📍 ' + CAT.location : '';
+  if (CAT.description) { const d = $('catDesc'); d.textContent = CAT.description; d.hidden = false; }
+  if (!CAT.batches?.length) { $('loc').textContent = '目前還沒有開放報名的課程'; return false; }
   $('batches').innerHTML = CAT.batches.map((b, i) =>
     `<label class="chip"><input type="radio" name="batch" value="${esc(b.batch)}" ${i === 0 ? 'checked' : ''}><span>${esc(b.batch)}</span></label>`).join('');
+  // 不分場次的活動：不顯示場次選項
+  $('batchBox').hidden = !!CAT.implicit && CAT.batches.length === 1;
   $('batches').onchange = () => renderCourses();
   renderCourses();
   return true;
 }
 function renderCourses(selected) {
   const b = CAT.batches.find(x => x.batch === val('batch'));
+  $('batchDesc').hidden = !b.description; $('batchDesc').textContent = b.description || '';
   let html = '', last = '';
   for (const c of b.courses) {
     if (c.date !== last) { html += `<div class="day">${md(c.date)}</div>`; last = c.date; }
@@ -310,7 +319,7 @@ async function loadMine() {
     const items = (r.courses || []).map(c => `<li>${md(c.date)} ${c.start}–${c.end} ${esc(c.name)}</li>`).join('');
     return `<div class="reg ${cancelled ? 'cancel' : ''}">
       <h3>${esc(r.student_name)} <span class="badge">${cancelled ? '已取消' : '已報名'}</span></h3>
-      <div class="meta">${esc(r.batch)} 場次・${esc(r.affiliation)}・${esc(r.school || '')}${r.parent_phone ? '・家長手機 ' + esc(r.parent_phone) : ''}</div>
+      <div class="meta">${CAT?.implicit ? '' : esc(r.batch) + ' 場次・'}${esc(r.affiliation)}・${esc(r.school || '')}${r.parent_phone ? '・家長手機 ' + esc(r.parent_phone) : ''}</div>
       <div class="meta">中餐：${(r.meals || []).map(m => `${md(m.date)} ${esc(m.meal)}`).join('、') || esc(r.meal)}</div>
       ${items ? `<ul>${items}</ul>` : '<p class="meta">（沒有報名的科目）</p>'}
       <div class="actions">
@@ -326,7 +335,7 @@ $('mineList').onclick = async e => {
   if (ed) openForm(MINE[+ed.dataset.edit]);
   if (ca) {
     const r = MINE[+ca.dataset.cancel];
-    if (!confirm(`確定取消 ${r.student_name} 在 ${r.batch} 場次的全部報名嗎？`)) return;
+    if (!confirm(`確定取消 ${r.student_name}${CAT?.implicit ? '' : ` 在 ${r.batch} 場次`}的全部報名嗎？`)) return;
     ca.disabled = true;
     try { await rpc('special_cancel', { p_registration_id: r.registration_id }); await loadMine(); }
     catch (err) { alert(err.message); ca.disabled = false; }
