@@ -692,6 +692,8 @@ function gradeOf(y) {
   return g < 7 ? '尚未入學' : g > 9 ? '已畢業' : ['國一', '國二', '國三'][g - 7];
 }
 
+// 欄位標題可以是文字，也可以是函式（例如依場次顯示「5/2（六）中餐」）
+const ttl = c => typeof c.t === 'function' ? c.t() : c.t;
 class DataTable {
   constructor(cfg) {
     this.cfg = cfg; this.rows = []; this.sel = new Set(); this.filters = {}; this.q = ''; this.page = 0;
@@ -767,10 +769,15 @@ class DataTable {
     if (this.page >= pages) this.page = pages - 1;
     const rows = all.slice(this.page * size, this.page * size + size);
     const ar = c => this.sort?.k === c.k ? `<span class="ar">${this.sort.d > 0 ? '▲' : '▼'}</span>` : '';
-    const opts = c => [...new Set(this.rows.map(r => this.text(c, r)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+    const opts = c => {
+      const vals = [...new Set(this.rows.map(r => this.text(c, r)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+      // 有固定選項的欄位（例如 報名／不報名）一律列出全部選項，順序照設定
+      const fixed = c.chips ? Object.keys(c.chips) : [];
+      return [...fixed, ...vals.filter(v => !fixed.includes(v))];
+    };
     const filt = c => (c.type === 'bool' || c.type === 'chip')
-      ? `<select data-filter="${c.k}" aria-label="篩選${esc(c.t)}"><option value="">全部</option>${opts(c).map(o => `<option ${this.filters[c.k] === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
-      : `<input data-filter="${c.k}" value="${esc(this.filters[c.k] || '')}" placeholder="篩選" aria-label="篩選${esc(c.t)}">`;
+      ? `<select data-filter="${c.k}" aria-label="篩選${esc(ttl(c))}"><option value="">全部</option>${opts(c).map(o => `<option ${this.filters[c.k] === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+      : `<input data-filter="${c.k}" value="${esc(this.filters[c.k] || '')}" placeholder="篩選" aria-label="篩選${esc(ttl(c))}">`;
     const cell = (c, r) => {
       if (c.html) return c.html(r);
       const v = this.val(c, r);
@@ -798,14 +805,14 @@ class DataTable {
       </div>
       ${cfg.note ? `<p class="muted" style="margin:0 0 8px">${cfg.note}</p>` : ''}
       <div class="tbl"><table class="dt"><thead>
-        <tr><th class="ck nosort"><input type="checkbox" data-act="selall" ${allSel ? 'checked' : ''} aria-label="全選這一頁"></th>${vis.map(c => `<th class="${cls(c)}" data-sort="${c.k}" draggable="true" title="點一下排序；按住左右拖曳可調整欄位順序">${esc(c.t)}${ar(c)}</th>`).join('')}</tr>
+        <tr><th class="ck nosort"><input type="checkbox" data-act="selall" ${allSel ? 'checked' : ''} aria-label="全選這一頁"></th>${vis.map(c => `<th class="${cls(c)}" data-sort="${c.k}" draggable="true" title="點一下排序；按住左右拖曳可調整欄位順序">${esc(ttl(c))}${ar(c)}</th>`).join('')}</tr>
         <tr class="filters"><th class="ck"></th>${vis.map(c => `<th>${filt(c)}</th>`).join('')}</tr>
       </thead><tbody>
         ${rows.map(r => { const id = this.rid(r); return `<tr data-id="${esc(id)}" class="${this.sel.has(id) ? 'sel' : ''} ${cfg.rowClass ? cfg.rowClass(r) : ''}"><td class="ck"><input type="checkbox" data-pick="${esc(id)}" ${this.sel.has(id) ? 'checked' : ''} aria-label="選取"></td>${vis.map(c => `<td class="${cls(c)}">${cell(c, r)}</td>`).join('')}</tr>`; }).join('')
           || `<tr><td colspan="${vis.length + 1}" class="muted" style="text-align:center;padding:28px;cursor:default">${this.rows.length ? '沒有符合篩選的資料' : (cfg.empty || '還沒有資料')}</td></tr>`}
       </tbody>
       </table></div>
-      <div class="pager">${sums ? `<span class="sumline">合計：${vis.filter(c => c.sum).map(c => `${esc(c.t)} ${fmt.money(all.reduce((s, r) => s + (Number(this.val(c, r)) || 0), 0))}`).join('・')}</span>` : ''}每頁 <select data-act="size" aria-label="每頁筆數">${[25, 50, 100, 'all'].map(n => `<option value="${n}" ${String(this.size) === String(n) ? 'selected' : ''}>${n === 'all' ? '全部' : n}</option>`).join('')}</select>
+      <div class="pager">${sums ? `<span class="sumline">合計：${vis.filter(c => c.sum).map(c => `${esc(ttl(c))} ${fmt.money(all.reduce((s, r) => s + (Number(this.val(c, r)) || 0), 0))}`).join('・')}</span>` : ''}每頁 <select data-act="size" aria-label="每頁筆數">${[25, 50, 100, 'all'].map(n => `<option value="${n}" ${String(this.size) === String(n) ? 'selected' : ''}>${n === 'all' ? '全部' : n}</option>`).join('')}</select>
         <button type="button" class="btn ghost sm" data-act="prev" ${this.page ? '' : 'disabled'}>上一頁</button> 第 ${this.page + 1} / ${pages} 頁
         <button type="button" class="btn ghost sm" data-act="next" ${this.page < pages - 1 ? '' : 'disabled'}>下一頁</button></div>`;
     if (focusKey) {
@@ -885,7 +892,7 @@ class DataTable {
     const p = document.createElement('div'); p.className = 'pop';
     const draw = () => {
       p.innerHTML = '<div class="muted" style="margin-bottom:6px">勾選要顯示的欄位，用 ↑↓ 調整順序</div>' +
-        this.order.map((k, i) => `<div class="row"><input type="checkbox" id="pc_${k}" data-k="${k}" ${this.hidden.has(k) ? '' : 'checked'}><label for="pc_${k}">${esc(this.col(k).t)}</label>
+        this.order.map((k, i) => `<div class="row"><input type="checkbox" id="pc_${k}" data-k="${k}" ${this.hidden.has(k) ? '' : 'checked'}><label for="pc_${k}">${esc(ttl(this.col(k)))}</label>
           <button type="button" class="mv" data-up="${i}" ${i ? '' : 'disabled'} aria-label="上移">↑</button><button type="button" class="mv" data-dn="${i}" ${i < this.order.length - 1 ? '' : 'disabled'} aria-label="下移">↓</button></div>`).join('') +
         '<div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="btn ghost sm" data-reset>還原預設</button><span class="spacer"></span><button type="button" class="btn sm" data-done>完成</button></div>';
     };
@@ -914,7 +921,7 @@ class DataTable {
     const vis = this.vis();
     let rows = this.view();
     if (this.sel.size) rows = rows.filter(r => this.sel.has(this.rid(r)));
-    const out = '﻿' + [vis.map(c => c.t), ...rows.map(r => vis.map(c => this.text(c, r)))]
+    const out = '﻿' + [vis.map(ttl), ...rows.map(r => vis.map(c => this.text(c, r)))]
       .map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([out], { type: 'text/csv' }));
@@ -1079,6 +1086,11 @@ function withDiffs(rows) {
   });
   return rows;
 }
+// 報名總表的中餐欄位標題：選了單一場次就顯示日期，全部場次就顯示「第 1 天／第 2 天」
+function regDayLabel(i) {
+  if (S.tbatch && COURSES) { const d = [...new Set(COURSES.filter(c => c.batch === S.tbatch).map(c => c.course_date))].sort()[i]; if (d) return md(d); }
+  return `第 ${i + 1} 天`;
+}
 // 後台新增的報名：填表人顯示「○○老師協助」（○○＝存檔那位老師／行政在系統裡的姓名）
 const roleOf = r => r.applicant_role || (r.source === '後台新增' ? (r.helper ? `${r.helper}老師協助` : '行政協助') : '');
 const TABLES = {
@@ -1089,7 +1101,9 @@ const TABLES = {
         rpc('admin_list', { p_key: 'registrations', p_category: S.cat, p_batch: S.tbatch || null }),
         rpc('admin_registration_helpers', { p_category: S.cat }).catch(() => ({})),
       ]);
-      rows.forEach(r => r.helper = helpers[r.registration_id] || null);
+      await coursesOf(S.cat);
+      const days = b => [...new Set(COURSES.filter(c => c.batch === b).map(c => c.course_date))].sort();
+      rows.forEach(r => { r.helper = (helpers || {})[r.registration_id] || null; r._days = days(r.batch); });
       return rows;
     },
     sort: { k: 'created_at', d: -1 },
@@ -1105,9 +1119,12 @@ const TABLES = {
       { k: 'parent_phone', t: '家長手機' },
       { k: 'applicant_role', t: '填表人', type: 'chip', get: r => roleOf(r), html: r => { const v = roleOf(r); return v ? `<span class="chip ${r.applicant_role ? 'c-grey' : 'c-lilac'}">${esc(v)}</span>` : ''; } },
       { k: 'email', t: '登入 Email' },
-      { k: 'subject_count', t: '科目數', type: 'num' },
-      { k: 'subjects', t: '報名科目', type: 'wrap' },
-      { k: 'meal', t: '中餐' },
+      ...SUBJ_ORDER.map(n => ({ k: 'subj_' + n, t: n, type: 'chip', chips: { '報名': 'c-ok', '不報名': 'c-grey' },
+        get: r => (r.subjects || '').split('、').includes(n) ? '報名' : '不報名' })),
+      ...[0, 1].map(i => ({ k: 'meal_d' + (i + 1), t: () => regDayLabel(i) + ' 中餐', type: 'chip',
+        chips: { '已訂葷食': 'c-out', '已訂素食': 'c-ok', '未訂餐': 'c-grey' },
+        get: r => { const d = (r._days || [])[i]; if (!d) return ''; return ({ '葷食': '已訂葷食', '素食': '已訂素食' })[(r.meals || {})[d]] || '未訂餐'; } })),
+      { k: 'subject_count', t: '科目數', type: 'num', hide: true },
       { k: 'memo', t: '備註', type: 'wrap' },
       { k: 'source', t: '來源', type: 'chip', hide: true },
       { k: 'log_count', t: '修改次數', type: 'num', hide: true },
