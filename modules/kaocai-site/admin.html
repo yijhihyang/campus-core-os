@@ -188,7 +188,6 @@
     <a href="#seats" data-page="seats">座位表</a>
     <div class="sec">報名</div>
     <a href="#registrations" data-page="registrations">報名總表</a>
-    <a href="#item_history" data-page="item_history">加退選紀錄</a>
     <a href="#logs" data-page="logs">修改紀錄</a>
     <div class="sec">行政</div>
     <a href="#changes" data-page="changes">資料異動審核 <span class="chip c-cx" id="chgBadge" hidden></span></a>
@@ -241,7 +240,7 @@
         <button class="btn ghost sm" id="batchBtn">批次移回未排</button>
         <button class="btn ghost sm" onclick="print()">列印</button>
       </div>
-      <p class="muted noprint" style="margin:0 0 8px">拖名字到座位排座；拖到別人座位＝交換；拖回右邊名單＝取消座位；在座位區按兩下＝批次勾選移回。</p>
+      <p class="muted noprint" style="margin:0 0 8px">拖名字到座位排座；拖到別人座位＝交換；拖回右邊名單＝取消座位；在名字上按兩下<b>右鍵</b>＝直接移回未排名單；在空白處按兩下右鍵＝批次勾選移回。</p>
       <div class="seatwrap">
         <div class="seatgrid" id="seatgrid"></div>
         <div><div class="muted" style="margin-bottom:6px">未排座位 <b id="unCount"></b></div><div class="unlist" id="unlist"></div></div>
@@ -339,7 +338,7 @@ async function loadBootstrap() {
   $('cat').value = S.cat;
   fillBatches();
 }
-const TABLE_PAGES = ['registrations', 'item_history', 'logs', 'changes', 'students', 'courses', 'attendance_fee', 'exam_results'];
+const TABLE_PAGES = ['registrations', 'logs', 'changes', 'students', 'courses', 'attendance_fee', 'exam_results'];
 const isTablePage = () => TABLE_PAGES.includes(S.page);
 function fillBatches() {
   const c = CATS.find(x => x.category === S.cat);
@@ -582,7 +581,21 @@ function openPanel() {
   $('pNames').innerHTML = seated.map(p => `<label><input type="checkbox" value="${p.seat_id}"> ${esc(p.name)}${p.status === '已取消' ? ' <span class="chip c-cx">已取消</span>' : ''}</label>`).join('') || '<span class="muted">目前沒有人排座</span>';
   $('panel').hidden = false; $('panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-$('seatgrid').addEventListener('dblclick', openPanel);
+// 右鍵按兩下：在名字上＝這個人直接移回未排；在空白處＝打開批次勾選
+let lastRight = { t: 0, el: null };
+$('seatgrid').addEventListener('contextmenu', async e => {
+  e.preventDefault();
+  const chip = e.target.closest('.sc'), target = chip || $('seatgrid');
+  const now = Date.now(), isDouble = now - lastRight.t < 450 && lastRight.el === target;
+  lastRight = { t: isDouble ? 0 : now, el: target };
+  if (!isDouble) return;
+  if (!chip) return openPanel();
+  const p = SEAT.people.find(x => x.item_id === chip.dataset.item);
+  if (!p?.seat_id) return;
+  try { await rpc('admin_unseat', { p_seat_ids: [p.seat_id] }); toast(`${p.name} 移回未排名單`); }
+  catch (err) { toast(err.message, true); }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
+});
 $('batchBtn').onclick = openPanel;
 $('pClose').onclick = () => $('panel').hidden = true;
 $('pAll').onclick = () => { const b = [...$('pNames').querySelectorAll('input')]; const on = b.every(x => x.checked); b.forEach(x => x.checked = !on); };
@@ -882,7 +895,7 @@ async function openForm(tb, row) {
   const v = Object.assign({}, cfg.defaults ? cfg.defaults() : {}, row ? JSON.parse(JSON.stringify(row)) : {});
   try { if (cfg.prepare) await cfg.prepare(v, isNew); } catch (e) { return toast(e.message, true); }
   DR = { tb, row, isNew, v };
-  $('dTitle').textContent = (isNew ? '新增' : '編輯') + cfg.item;
+  $('dTitle').textContent = (isNew ? '新增' : cfg.onSave ? '編輯' : '查看') + cfg.item;
   drawForm();
   $('drawer').hidden = $('drawerBg').hidden = false;
   $('dBody').querySelector('input:not([type=hidden]):not([readonly]),select,textarea')?.focus();
@@ -902,7 +915,7 @@ function fieldHtml(f, v) {
   const id = 'f_' + (f.k || 'x' + Math.random().toString(36).slice(2, 7));
   let inner;
   switch (f.type) {
-    case 'ro': inner = `<div>${esc(val ?? '') || '<span class="muted">—</span>'}</div>`; break;
+    case 'ro': inner = `<div style="white-space:pre-line">${esc(val ?? '') || '<span class="muted">—</span>'}</div>`; break;
     case 'textarea': inner = `<textarea class="in" id="${id}" data-f="${f.k}">${esc(val ?? '')}</textarea>`; break;
     case 'select': inner = `<select class="in" id="${id}" data-f="${f.k}">${f.blank === false ? '' : '<option value="">（未指定）</option>'}${f.opts.map(o => {
         const ov = typeof o === 'object' ? o.v : o, ot = typeof o === 'object' ? o.t : o;
@@ -992,6 +1005,32 @@ const CH = {
 const reqText = (o, k, label) => (!o[k] || !String(o[k]).trim()) ? `請填寫${label}` : null;
 const scopeRows = rows => (rows || []).filter(r => !S.tbatch || r.batch === S.tbatch);
 
+// 修改紀錄：和同一筆報名的上一次紀錄比較，列出變更
+function withDiffs(rows) {
+  const by = {};
+  [...rows].sort((a, b) => new Date(a.created_at) - new Date(b.created_at) || a.log_id - b.log_id).forEach(r => {
+    const prev = by[r.registration_id]; by[r.registration_id] = r;
+    r._prev = prev || null;
+    if (!prev) { r.diff = r.action === '匯入' ? '匯入報名：' + (r.subjects || '') : '新報名：' + (r.subjects || ''); return; }
+    const out = [], ch = (label, a, b) => { if ((a || '') !== (b || '')) out.push(`${label}：${a || '空白'} → ${b || '空白'}`); };
+    ch('狀態', prev.status, r.status);
+    ch('場次', prev.batch, r.batch);
+    const A = new Set(prev.course_keys || []), B = new Set(r.course_keys || []);
+    const add = [...B].filter(x => !A.has(x)), del = [...A].filter(x => !B.has(x));
+    if (add.length) out.push('加選：' + add.join('、'));
+    if (del.length) out.push('退選：' + del.join('、'));
+    if (prev.batch !== r.batch) ch('中餐', prev.meals, r.meals);   // 換場次時日期不同，整段對照
+    else {
+      const mp = t => Object.fromEntries((t || '').split('、').filter(Boolean).map(x => x.split(' ')));
+      const ma = mp(prev.meals), mb = mp(r.meals);
+      [...new Set([...Object.keys(ma), ...Object.keys(mb)])].forEach(d => ch(`${d} 中餐`, ma[d], mb[d]));
+    }
+    ch('班別', prev.affiliation, r.affiliation); ch('學生', prev.name, r.name);
+    ch('學校', prev.school, r.school); ch('家長手機', prev.parent_phone, r.parent_phone); ch('備註', prev.memo, r.memo);
+    r.diff = out.join('\n');
+  });
+  return rows;
+}
 // 後台新增的報名沒有填表人身分，一律視為「行政協助」
 const roleOf = r => r.applicant_role || (r.source === '後台新增' ? '行政協助' : '');
 const TABLES = {
@@ -1084,48 +1123,40 @@ const TABLES = {
         ? { label: '取消報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '已取消' }).then(() => '已取消報名') }
         : { label: '恢復報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '報名中' }).then(() => '已恢復報名，請確認科目') },
       row.reminder ? { label: '複製提醒訊息', close: false, run: r => copyText(r.reminder, '已複製提醒訊息') } : null,
-      { label: '加退選紀錄', close: false, run: r => { S.jump = r.name; location.hash = 'item_history'; } },
-    ],
-  }),
-
-  item_history: () => ({
-    key: 'item_history', title: '加退選紀錄', item: '紀錄', id: 'history_id',
-    load: () => rpc('admin_list', { p_key: 'item_history', p_category: S.cat, p_batch: S.tbatch || null }),
-    sort: { k: 'created_at', d: -1 },
-    note: '每次加選、退選都會自動記一筆，不能修改。家長在報名表自己改的，來源是「報名表」。',
-    empty: '還沒有加退選紀錄',
-    cols: [
-      { k: 'created_at', t: '時間', type: 'dt' },
-      { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
-      { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
-      { k: 'batch', t: '場次', type: 'chip' },
-      { k: 'course_name', t: '科目' },
-      { k: 'course_date', t: '上課日', type: 'date' },
-      { k: 'start_time', t: '上課時間', get: r => hm(r.start_time) },
-      { k: 'action', t: '動作', type: 'chip', chips: CH.action },
-      { k: 'source', t: '來源', type: 'chip' },
-      { k: 'actor', t: '操作者' },
+      { label: '修改紀錄', close: false, run: r => { S.jump = r.name; location.hash = 'logs'; } },
     ],
   }),
 
   logs: () => ({
     key: 'logs', title: '修改紀錄', item: '紀錄', id: 'log_id',
-    load: () => rpc('admin_list', { p_key: 'logs', p_category: S.cat, p_batch: S.tbatch || null }),
+    load: async () => withDiffs(await rpc('admin_logs', { p_category: S.cat, p_batch: S.tbatch || null })),
     sort: { k: 'created_at', d: -1 },
-    note: '每次送出或修改報名，系統都會存一份當下的完整內容，不能修改。',
+    note: '每次送出或修改報名都會記一筆，不能修改。「變更內容」是和上一次比較的差異；點一列可以看修改前後的完整對照。',
+    empty: '還沒有修改紀錄',
     cols: [
       { k: 'created_at', t: '時間', type: 'dt' },
       { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
       { k: 'batch', t: '場次', type: 'chip' },
       { k: 'action', t: '動作', type: 'chip', chips: CH.action },
       { k: 'email', t: '操作者' },
-      { k: 'status', t: '當時狀態', type: 'chip', chips: CH.status },
-      { k: 'subjects', t: '當時科目', type: 'wrap' },
-      { k: 'meals', t: '當時中餐' },
+      { k: 'diff', t: '變更內容', type: 'wrap', html: r => r.diff ? esc(r.diff).replace(/\n/g, '<br>') : '<span class="muted">（沒有變更）</span>' },
+      { k: 'status', t: '修改後狀態', type: 'chip', chips: CH.status, hide: true },
+      { k: 'subjects', t: '修改後科目', type: 'wrap', hide: true },
+      { k: 'meals', t: '修改後中餐', hide: true },
       { k: 'parent_phone', t: '家長手機', hide: true },
       { k: 'school', t: '學校', hide: true },
       { k: 'memo', t: '備註', type: 'wrap', hide: true },
     ],
+    form: v => {
+      const b = v._prev || {};
+      const pair = (t, k) => ({ t, type: 'ro', val: !v._prev ? (v[k] || '—') : (b[k] || '') === (v[k] || '') ? `${v[k] || '—'}（沒變）` : `${b[k] || '—'}　→　${v[k] || '—'}` });
+      return [
+        { t: '學生', type: 'ro', val: `${v.name}・${fmt.dt(v.created_at)}・${v.action}・${v.email || ''}` },
+        { t: '變更內容', type: 'ro', val: v.diff || (v._prev ? '沒有變更' : '第一筆紀錄') },
+        pair('狀態（修改前 → 修改後）', 'status'), pair('場次', 'batch'), pair('科目', 'subjects'), pair('中餐', 'meals'),
+        pair('班別', 'affiliation'), pair('學校', 'school'), pair('家長手機', 'parent_phone'), pair('備註', 'memo'),
+      ];
+    },
   }),
 
   changes: () => ({
@@ -1423,7 +1454,7 @@ async function openTablePage(page) {
     if (sub === 'g9') { tb.filters.grade = '國三'; tb.locked = { grade: '國三' }; }
     else { if (tb.filters.grade === '國三') tb.filters.grade = ''; tb.locked = null; }
   }
-  if (S.jump && key === 'item_history') { tb.filters = { name: S.jump }; tb.q = ''; S.jump = null; }
+  if (S.jump && key === 'logs') { tb.filters = { name: S.jump }; tb.q = ''; S.jump = null; }
   tb.host = $('dtHost'); tb.bind();
   await tb.reload();
 }
