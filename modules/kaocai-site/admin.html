@@ -135,6 +135,10 @@
   .mvseat{display:inline-block;padding:0 6px;border-radius:6px;margin:3px 3px 0 0;font-size:12px;background:var(--grey)}
   .mvseat.diff{background:var(--rose);color:var(--rose-ink)}
   .mvseat.none{background:var(--lemon);color:var(--lemon-ink)}
+  .seat.blocked{background:#5B5F66;border:1.5px solid #5B5F66;color:#C9CCD1;font-size:11px}
+  .seatgrid.editing .seat[data-r]{cursor:pointer}
+  .seatgrid.editing .seat[data-r]:not(.blocked):hover{background:#E4E5E8;border-style:solid}
+  .seatgrid.editing{outline:2px dashed #5B5F66;outline-offset:-2px}
   .seat.hover,.unlist.hover{background:var(--sky);border-style:solid;border-color:var(--sky-ink)}
   .sc{cursor:grab;width:100%;text-align:center;font-size:13px;padding:6px 4px;border-radius:8px;background:var(--mint);color:var(--mint-ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;touch-action:none}
   .sc.out{background:var(--lemon);color:var(--lemon-ink)}
@@ -291,6 +295,7 @@
         <span class="muted" id="seatInfo"></span>
         <span class="spacer"></span>
         <select id="copyFrom" class="meal"><option value="">從其他科複製座位…</option></select>
+        <button class="btn ghost sm" id="blockBtn" title="點座位切換開放／不開放（例如被柱子擋住），整間教室的每一堂課都會套用">設定不開放座位</button>
         <button class="btn ghost sm" id="batchBtn">批次移回未排</button>
         <button class="btn ghost sm" onclick="print()">列印</button>
       </div>
@@ -662,7 +667,7 @@ async function loadBoardThenSeats() {
 }
 $('seatTabs').onclick = e => {
   const b = e.target.closest('[data-c]'); if (!b) return;
-  if (b.dataset.c === '3d') S.s3d = true; else { S.s3d = false; S.seatCourse = b.dataset.c; }
+  if (b.dataset.c === '3d') { S.s3d = true; S.blockEdit = false; } else { S.s3d = false; S.seatCourse = b.dataset.c; }
   $('panel').hidden = true; loadBoardThenSeats();
 };
 function personAt(r, c) { return SEAT.people.find(p => p.row === r && p.col === c); }
@@ -670,6 +675,7 @@ function chipHtml(p) {
   const cls = p.status === '已取消' ? 'cx' : p.affiliation === '班外生' ? 'out' : '';
   return `<div class="sc ${cls}" data-item="${p.item_id}" title="${esc(p.name)}${p.status === '已取消' ? '（已取消報名）' : ''}${p.school ? '・' + esc(p.school) : ''}">${esc(p.name)}</div>`;
 }
+const isBlocked = (L, r, c) => (L.blocked || []).some(b => b[0] === r && b[1] === c);
 function renderSeats() {
   const L = SEAT.layout, aisles = (L.aisles || []).map(Number);
   const c = SEAT.course;
@@ -679,19 +685,37 @@ function renderSeats() {
   for (let r = 1; r <= L.rows; r++) for (let col = 1; col <= L.cols; col++) {
     if (aisles.includes(col)) { h += '<div class="seat aisle"></div>'; continue; }
     if (col === 1 && r === 1 && L.door) { h += `<div class="seat door">${esc(L.door)}</div>`; continue; }
-    const p = personAt(r, col);
-    h += `<div class="seat" data-r="${r}" data-c="${col}">${p ? chipHtml(p) : ''}</div>`;
+    const p = personAt(r, col), bl = isBlocked(L, r, col);
+    h += `<div class="seat${bl ? ' blocked' : ''}" data-r="${r}" data-c="${col}"${bl ? ' title="不開放的座位"' : ''}>${p ? chipHtml(p) : bl ? '不開放' : ''}</div>`;
   }
   $('seatgrid').innerHTML = h;
+  $('seatgrid').classList.toggle('editing', !!S.blockEdit);
+  $('blockBtn').textContent = S.blockEdit ? '完成設定' : '設定不開放座位';
+  $('blockBtn').classList.toggle('ghost', !S.blockEdit);
+  $('seatHint').innerHTML = S.blockEdit
+    ? '<b>設定不開放座位中：</b>點一下座位＝改成不開放（深灰色，不能排人）；再點一下＝恢復開放。這個設定屬於教室，在這間教室上的每一堂課都會一起套用。'
+    : SEAT_HINT;
   const un = SEAT.people.filter(p => !p.seat_id && p.status === '報名中');
   $('unlist').innerHTML = un.map(chipHtml).join('') || '<div class="muted">全部都排好了</div>';
   $('unCount').textContent = `${un.length} 人`;
   $('copyFrom').innerHTML = '<option value="">從其他科複製座位…</option>' + SEAT.other_courses.map(o => `<option value="${o.course_id}">從「${esc(o.name)}」複製</option>`).join('');
 }
+const SEAT_HINT = $('seatHint').innerHTML;
+$('blockBtn').onclick = () => { S.blockEdit = !S.blockEdit; renderSeats(); };
+$('seatgrid').addEventListener('click', async e => {
+  if (!S.blockEdit) return;
+  const cell = e.target.closest('.seat[data-r]'); if (!cell) return;
+  const r = +cell.dataset.r, c = +cell.dataset.c;
+  try {
+    const on = await rpc('admin_toggle_blocked_seat', { p_course: S.seatCourse, p_row: r, p_col: c });
+    toast(`${r}排${c}列：${on ? '已設為不開放' : '已恢復開放'}`);
+  } catch (err) { toast(/Could not find the function/i.test(err.message) ? '不開放座位功能尚未啟用' : err.message, true); }
+  SEAT = await rpc('admin_seatmap', { p_course: S.seatCourse }); renderSeats();
+});
 // 拖拉（滑鼠＋觸控）
 let dragItem = null, ghost = null, over = null, startXY = null;
 document.addEventListener('pointerdown', e => {
-  const ch = e.target.closest('#page-seats .sc'); if (!ch || e.button > 0) return;
+  const ch = e.target.closest('#page-seats .sc'); if (!ch || e.button > 0 || S.blockEdit) return;
   dragItem = ch.dataset.item; startXY = [e.clientX, e.clientY]; e.preventDefault();
 });
 document.addEventListener('pointermove', e => {
@@ -705,7 +729,7 @@ document.addEventListener('pointermove', e => {
   ghost.style.left = (e.clientX - 42) + 'px'; ghost.style.top = (e.clientY - 16) + 'px';
   over && over.classList.remove('hover');
   const el = document.elementFromPoint(e.clientX, e.clientY);
-  over = el && (el.closest('.seat[data-r]') || el.closest('#unlist'));
+  over = el && (el.closest('.seat[data-r]:not(.blocked)') || el.closest('#unlist'));
   over && over.classList.add('hover');
 });
 document.addEventListener('pointerup', async () => {
@@ -862,6 +886,7 @@ function draw3D() {
       const q = [[cx0 - hx, cy0 - hy], [cx0 + hx, cy0 - hy], [cx0 + hx, cy0 + hy], [cx0 - hx, cy0 + hy]].map(([x, y]) => P(x, y, Z));
       const s = stuOf.get(li + ':' + r + '-' + c);
       poly(q);
+      if (!s && isBlocked(ly.L, r, c)) { ctx.fillStyle = `rgba(91,95,102,${sel ? 0.25 : 0.6})`; ctx.fill(); continue; }
       if (s && visible(s)) {
         const dim = sel && s.key !== sel;
         ctx.fillStyle = hexA(ly.color, dim ? 0.18 : s.key === sel ? 1 : 0.78); ctx.fill();
