@@ -74,6 +74,29 @@
   .att .y.on{background:var(--mint);color:var(--mint-ink);font-weight:700}
   .att .n.on{background:var(--rose);color:var(--rose-ink);font-weight:700}
   .att .u.on{background:var(--grey);color:var(--ink);font-weight:700}
+  /* 上方統計區 */
+  .summary{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1.4fr);gap:12px;margin-bottom:16px}
+  .sumcard{background:#fff;border-radius:16px;padding:12px 14px;overflow-x:auto}
+  .sumcard h3{margin:0 0 8px;font-size:14px;color:var(--navy)}
+  .sumtbl{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+  .sumtbl th,.sumtbl td{padding:6px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+  .sumtbl thead th{background:#FBF8F1;color:var(--muted);font-weight:500;font-size:12px;position:static;line-height:1.35}
+  .sumtbl thead th b{display:block;color:var(--navy);font-size:15px;margin-top:2px}
+  .sumtbl tbody th{text-align:left;color:var(--muted);font-weight:500;font-size:13px}
+  .sumtbl tr.hl td{background:var(--lemon);color:var(--navy);font-weight:700;font-size:17px}
+  .sumtbl tr.hl th{background:var(--lemon);color:var(--lemon-ink);font-weight:700}
+  .sumtbl tr:last-child td,.sumtbl tr:last-child th{border-bottom:0}
+  .sumtbl td.on{background:#EEF2F8}
+  .sumtbl tr.hl td.on{background:#F6E7AE}
+  .sumtbl thead th.c{cursor:pointer}
+  .sumtbl thead th.c:hover b,.sumtbl thead th.on b{text-decoration:underline;text-underline-offset:4px}
+  @media (max-width:820px){ .summary{grid-template-columns:1fr} }
+  /* 標籤頁 */
+  .tabbar{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1.5px solid var(--line);margin-bottom:12px}
+  .tabbar button{border:0;background:transparent;padding:9px 16px;font-size:15px;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1.5px;border-radius:10px 10px 0 0}
+  .tabbar button:hover{color:var(--navy);background:#fff}
+  .tabbar button.on{color:var(--navy);font-weight:700;border-bottom-color:var(--navy);background:#fff}
+  .tabbar button .n{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
   .meal{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff}
   .toast{position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:12px;background:var(--navy);color:#fff;font-size:14px;z-index:50;max-width:360px}
   .toast.err{background:var(--rose-ink)}
@@ -210,10 +233,10 @@
 
     <!-- 點名表 -->
     <section id="page-roll" hidden>
-      <div class="pills" id="courseTabs"></div>
+      <div class="summary" id="summary"></div>
+      <div class="tabbar" id="courseTabs" role="tablist"></div>
       <div id="rollView">
-        <div class="muted" id="courseInfo"></div>
-        <div class="stats" id="stats"></div>
+        <div class="muted" id="courseInfo" style="margin-bottom:10px"></div>
         <div class="tools">
           <input class="in" id="search" placeholder="搜尋姓名、學校">
           <label class="muted"><input type="checkbox" id="showCx"> 顯示已取消</label>
@@ -221,10 +244,9 @@
           <button class="btn ghost sm" id="copyNames">複製姓名</button>
           <button class="btn ghost sm" id="csv">匯出 CSV</button>
         </div>
-        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>出席</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>點名</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
       </div>
       <div id="mealView" hidden>
-        <div class="stats" id="mealStats"></div>
         <div class="tools"><button class="btn ghost sm" id="copyMeal">複製訂餐摘要</button></div>
         <div class="mealgrid" id="mealLists"></div>
       </div>
@@ -396,14 +418,45 @@ setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && $('
 let BOARD = null;
 async function loadBoard() {
   BOARD = await rpc('admin_board', { p_category: S.cat, p_batch: S.batch });
-  if (!S.course) S.course = BOARD.courses[0]?.course_id || 'meal';
+  if (!S.course || (S.course !== 'meal' && !BOARD.courses.some(c => c.course_id === S.course))) S.course = orderedCourses()[0]?.course_id || 'meal';
   renderTabs(); renderRoll();
 }
-function renderTabs() {
-  $('courseTabs').innerHTML = BOARD.courses.map(c =>
-    `<button class="pill ${S.course === c.course_id ? 'on' : ''}" data-c="${c.course_id}">${esc(c.course_name)} <span class="muted">${c.enrolled}</span></button>`).join('') +
-    `<button class="pill ${S.course === 'meal' ? 'on' : ''}" data-c="meal">訂餐</button>`;
+// 分頁順序：國 英 數 自 社，其他課接在後面（依上課時間）
+const SUBJ_ORDER = ['國文', '英文', '數學', '自然', '社會'];
+function orderedCourses() {
+  const rank = c => { const i = SUBJ_ORDER.indexOf(c.course_name); return i < 0 ? 99 : i; };
+  return BOARD.courses.slice().sort((a, b) => rank(a) - rank(b) || (a.course_date + a.start_time).localeCompare(b.course_date + b.start_time));
 }
+function renderTabs() {
+  $('courseTabs').innerHTML = orderedCourses().map(c =>
+    `<button type="button" role="tab" class="${S.course === c.course_id ? 'on' : ''}" data-c="${c.course_id}">${esc(c.course_name)}名單<span class="n">${c.enrolled}</span></button>`).join('') +
+    `<button type="button" role="tab" class="${S.course === 'meal' ? 'on' : ''}" data-c="meal">訂餐名單</button>`;
+  renderSummary();
+}
+// 上方統計：各科報名人數＋每日訂餐
+function renderSummary() {
+  const cs = orderedCourses();
+  const regs = new Set(BOARD.roster.filter(r => r.status === '報名中').map(r => r.registration_id));
+  const total = regs.size;
+  const cell = (c, v) => `<td class="${S.course === c.course_id ? 'on' : ''}">${v}</td>`;
+  const meals = BOARD.meal_counts.slice().sort((a, b) => a.course_date.localeCompare(b.course_date));
+  $('summary').innerHTML = `
+    <div class="sumcard"><h3>報名統計</h3><table class="sumtbl">
+      <thead><tr><th></th>${cs.map(c => `<th class="c ${S.course === c.course_id ? 'on' : ''}" data-c="${c.course_id}" title="看${esc(c.course_name)}名單">${md(c.course_date).replace(/（.）/, '')} ${hm(c.start_time)}–${hm(c.end_time)}<b>${esc(c.course_name)}</b></th>`).join('')}</tr></thead>
+      <tbody>
+        <tr class="hl"><th>已報名</th>${cs.map(c => cell(c, c.enrolled)).join('')}</tr>
+        <tr><th>不報名</th>${cs.map(c => cell(c, total - c.enrolled)).join('')}</tr>
+        <tr><th>填表總計</th>${cs.map(c => cell(c, total)).join('')}</tr>
+      </tbody></table></div>
+    <div class="sumcard"><h3>訂餐統計</h3><table class="sumtbl">
+      <thead><tr><th></th>${meals.map(m => `<th><b>${md(m.course_date)}</b></th>`).join('') || '<th>—</th>'}</tr></thead>
+      <tbody>
+        <tr class="hl"><th>葷食</th>${meals.map(m => `<td>${m.meat}</td>`).join('') || '<td>0</td>'}</tr>
+        <tr><th>素食</th>${meals.map(m => `<td>${m.veg}</td>`).join('') || '<td>0</td>'}</tr>
+        <tr><th>合計</th>${meals.map(m => `<td>${m.total}</td>`).join('') || '<td>0</td>'}</tr>
+      </tbody></table></div>`;
+}
+$('summary').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.course = b.dataset.c; renderTabs(); renderRoll(); };
 $('courseTabs').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.course = b.dataset.c; renderTabs(); renderRoll(); };
 $('search').oninput = () => { S.q = $('search').value.trim(); renderRoll(); };
 $('showCx').onchange = () => { S.showCx = $('showCx').checked; renderRoll(); };
@@ -424,9 +477,7 @@ function renderRoll() {
   if (isMeal) return renderMeals();
   const c = BOARD.courses.find(x => x.course_id === S.course);
   if (!c) { $('rows').innerHTML = ''; return; }
-  $('courseInfo').textContent = `${md(c.course_date)} ${hm(c.start_time)}–${hm(c.end_time)}${c.teacher_name ? '・' + c.teacher_name + ' 老師' : ''}`;
-  const st = [['報名', c.enrolled], ['班內', c.inside], ['班外', c.outside], ['已出席', c.attended], ['缺席', c.absent], ['未點名', c.unmarked], ['已排座', c.seated]];
-  $('stats').innerHTML = st.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+  $('courseInfo').textContent = `${md(c.course_date)} ${hm(c.start_time)}–${hm(c.end_time)}${c.teacher_name ? '・' + c.teacher_name + ' 老師' : ''}・已到班 ${c.attended}／未到班 ${c.absent}／未點名 ${c.unmarked}`;
   const rows = currentRows();
   $('rows').innerHTML = rows.map((r, i) => {
     const cx = r.status === '已取消';
@@ -436,9 +487,9 @@ function renderRoll() {
       : `<span class="muted">${cx ? '—' : '未跨中午'}</span>`;
     const att = cx ? '<span class="chip c-cx">已取消</span>' :
       `<span class="att" data-item="${r.item_id}">
-        <button class="u ${r.attended === null ? 'on' : ''}" data-v="null">未點</button>
-        <button class="y ${r.attended === true ? 'on' : ''}" data-v="true">出席</button>
-        <button class="n ${r.attended === false ? 'on' : ''}" data-v="false">缺席</button></span>`;
+        <button class="u ${r.attended === null ? 'on' : ''}" data-v="null">未點名</button>
+        <button class="y ${r.attended === true ? 'on' : ''}" data-v="true">已到班</button>
+        <button class="n ${r.attended === false ? 'on' : ''}" data-v="false">未到班</button></span>`;
     return `<tr class="${cx ? 'cx' : ''}"><td>${i + 1}</td><td class="nm"><b>${esc(r.name)}</b></td>
       <td><span class="chip ${r.affiliation === '班外生' ? 'c-out' : 'c-in'}">${r.affiliation === '班外生' ? '班外' : '班內'}</span></td>
       <td>${esc(r.school || '')}</td><td>${esc(r.parent_phone || '')}</td><td>${meal}</td><td>${att}</td>
@@ -479,15 +530,13 @@ $('copyNames').onclick = () => navigator.clipboard.writeText(currentRows().filte
 $('csv').onclick = () => {
   const c = BOARD.courses.find(x => x.course_id === S.course);
   const rows = currentRows();
-  const head = ['序號', '姓名', '班別', '學校', '家長電話', '當天中餐', '出席', '講義', '狀態'];
-  const lines = rows.map((r, i) => [i + 1, r.name, r.affiliation, r.school, r.parent_phone, r.meal, r.attended === null ? '' : r.attended ? 'Y' : 'N', r.handout_given ? 'Y' : '', r.status]);
+  const head = ['序號', '姓名', '班別', '學校', '家長電話', '當天中餐', '點名', '講義', '狀態'];
+  const lines = rows.map((r, i) => [i + 1, r.name, r.affiliation, r.school, r.parent_phone, r.meal, r.attended === null ? '未點名' : r.attended ? '已到班' : '未到班', r.handout_given ? 'Y' : '', r.status]);
   const csv = '﻿' + [head, ...lines].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   a.download = `點名表_${c?.course_name || ''}_${S.batch}.csv`; a.click();
 };
 function renderMeals() {
-  $('mealStats').innerHTML = BOARD.meal_counts.map(m =>
-    `<div class="stat"><b>${m.meat}／${m.veg}</b><span>${md(m.course_date)} 葷／素（共 ${m.total}）</span></div>`).join('');
   $('mealLists').innerHTML = BOARD.meal_counts.map(m => {
     const list = BOARD.meal_list.filter(x => x.course_date === m.course_date);
     const g = k => list.filter(x => x.meal === k).map(x => `<li>${esc(x.name)}${x.affiliation === '班外生' ? ' <span class="chip c-out">班外</span>' : ''}</li>`).join('');
