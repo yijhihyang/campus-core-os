@@ -139,6 +139,37 @@
   .seatgrid.editing .seat[data-r]{cursor:pointer}
   .seatgrid.editing .seat[data-r]:not(.blocked):hover{background:#E4E5E8;border-style:solid}
   .seatgrid.editing{outline:2px dashed #5B5F66;outline-offset:-2px}
+  /* 教室座位編輯器 */
+  .rooms{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:start}
+  .roomlist{padding:10px;display:flex;flex-direction:column;gap:4px}
+  .roomlist button.rm{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:10px;color:var(--ink)}
+  .roomlist button.rm:hover{background:var(--grey)}
+  .roomlist button.rm.on{background:var(--sky);color:var(--sky-ink)}
+  .roomlist button.rm small{display:block;color:var(--muted);font-size:12px}
+  .roomlist button.rm.on small{color:var(--sky-ink)}
+  .redit-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .redit-head .in{max-width:240px;font-size:18px;font-weight:700;color:var(--navy)}
+  .redit-ctl{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:10px;font-size:14px}
+  .stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .stepper button{border:0;background:#fff;width:30px;height:32px;font-size:16px;color:var(--navy)}
+  .stepper button:hover{background:var(--grey)}
+  .stepper input{width:44px;border:0;text-align:center;height:32px;font-weight:700}
+  .tools2{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .rgrid{display:grid;gap:5px;user-select:none;-webkit-user-select:none;touch-action:none}
+  .rgrid .h{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;border-radius:8px;min-height:24px;cursor:pointer}
+  .rgrid .h:hover{background:var(--grey);color:var(--navy)}
+  .rgrid .h.aisle{color:var(--sky-ink);font-weight:700}
+  .rgrid .rh{cursor:default} .rgrid .rh:hover{background:none;color:var(--muted)}
+  .rc{min-height:40px;border:1.5px solid #E2DCCD;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);cursor:pointer;position:relative}
+  .rc:hover{border-color:var(--navy)}
+  .rc.aisle{background:repeating-linear-gradient(45deg,#F4F1EA,#F4F1EA 4px,#EAE5D9 4px,#EAE5D9 8px);border-color:transparent;cursor:default}
+  .rc.blocked{background:#5B5F66;border-color:#5B5F66;color:#C9CCD1}
+  .rc.door{background:var(--lemon);border-color:var(--gold);color:var(--lemon-ink);font-weight:700}
+  .rc.used::after{content:'';position:absolute;right:4px;top:4px;width:6px;height:6px;border-radius:50%;background:var(--mint-ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px;align-items:center}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-3px;margin-right:4px;border:1.5px solid #E2DCCD;background:#fff}
+  .front{text-align:center;font-size:12px;color:var(--muted);letter-spacing:.3em;margin:0 0 6px}
+  @media (max-width:820px){ .rooms{grid-template-columns:1fr} }
   .seat.hover,.unlist.hover{background:var(--sky);border-style:solid;border-color:var(--sky-ink)}
   .sc{cursor:grab;width:100%;text-align:center;font-size:13px;padding:6px 4px;border-radius:8px;background:var(--mint);color:var(--mint-ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;touch-action:none}
   .sc.out{background:var(--lemon);color:var(--lemon-ink)}
@@ -245,6 +276,7 @@
     <a href="#changes" data-page="changes">資料異動審核 <span class="chip c-cx" id="chgBadge" hidden></span></a>
     <a href="#students" data-page="students">學生名單</a>
     <a href="#courses" data-page="courses">課程設定</a>
+    <a href="#rooms" data-page="rooms">教室座位</a>
     <a href="#attendance_fee" data-page="attendance_fee">出席與學費</a>
     <a href="#exam_results" data-page="exam_results">會考成績</a>
     <div class="sec">帳號</div>
@@ -339,6 +371,13 @@
       </div>
     </section>
     <!-- 通用表格頁 -->
+    <!-- 教室座位編輯器 -->
+    <section id="page-rooms" hidden>
+      <div class="rooms">
+        <div class="card roomlist" id="roomList"></div>
+        <div class="card" id="roomEdit"></div>
+      </div>
+    </section>
     <section id="page-table" hidden>
       <div class="subtabs" id="subtabs"></div>
       <div id="dtHost"></div>
@@ -453,13 +492,18 @@ $('refresh').onclick = () => reload();
 /* ===== 路由 ===== */
 function route() {
   S.page = (location.hash.replace('#', '') || 'roll');
-  if (!['roll', 'seats', ...TABLE_PAGES].includes(S.page)) S.page = 'roll';
+  if (S.page !== 'rooms' && ROOM.dirty) {
+    if (!confirm('教室座位還沒儲存，確定要離開嗎？')) { history.replaceState(null, '', '#rooms'); S.page = 'rooms'; return; }
+    ROOM.dirty = false;
+  }
+  if (!['roll', 'seats', 'rooms', ...TABLE_PAGES].includes(S.page)) S.page = 'roll';
   document.querySelectorAll('nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === S.page));
   $('page-roll').hidden = S.page !== 'roll';
   $('page-seats').hidden = S.page !== 'seats';
+  $('page-rooms').hidden = S.page !== 'rooms';
   $('page-table').hidden = !isTablePage();
   // 學生名單、會考成績和活動無關，隱藏活動／場次選單
-  const noScope = ['students', 'exam_results', 'changes'].includes(S.page);
+  const noScope = ['students', 'exam_results', 'changes', 'rooms'].includes(S.page);
   $('cat').hidden = $('batch').hidden = $('regOpen').hidden = noScope;
   fillBatches();
   closeDrawer();
@@ -472,11 +516,12 @@ async function reload() {
   try {
     if (S.page === 'roll') await loadBoard();
     else if (S.page === 'seats') await loadBoardThenSeats();
+    else if (S.page === 'rooms') await loadRooms();
     else await openTablePage(S.page);
     $('updated').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
   } catch (e) { toast(e.message, true); }
 }
-setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && !isTablePage()) reload(); }, 15000);
+setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && !isTablePage() && S.page !== 'rooms') reload(); }, 15000);
 
 /* ===== 點名表 ===== */
 let BOARD = null;
@@ -684,7 +729,7 @@ function renderSeats() {
   let h = '';
   for (let r = 1; r <= L.rows; r++) for (let col = 1; col <= L.cols; col++) {
     if (aisles.includes(col)) { h += '<div class="seat aisle"></div>'; continue; }
-    if (col === 1 && r === 1 && L.door) { h += `<div class="seat door">${esc(L.door)}</div>`; continue; }
+    if (L.door_row && r === L.door_row && col === L.door_col) { h += `<div class="seat door">${esc(L.door)}</div>`; continue; }
     const p = personAt(r, col), bl = isBlocked(L, r, col);
     h += `<div class="seat${bl ? ' blocked' : ''}" data-r="${r}" data-c="${col}"${bl ? ' title="不開放的座位"' : ''}>${p ? chipHtml(p) : bl ? '不開放' : ''}</div>`;
   }
@@ -880,7 +925,7 @@ function draw3D() {
     for (let r = 1; r <= ly.L.rows; r++) for (let c = 1; c <= ly.L.cols; c++) {
       const col = ly.xs[c]; if (col.aisle) continue;
       const [cx0, cy0] = seatXY(ly, r, c), hx = 0.42, hy = DEP * 0.4;
-      if (r === 1 && c === 1 && ly.L.door) {
+      if (ly.L.door_row && r === ly.L.door_row && c === ly.L.door_col) {
         const [tx, ty] = P(cx0, cy0, Z); ctx.fillStyle = hexA(ly.color, 0.7); ctx.font = '11px "Noto Sans TC",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(ly.L.door, tx, ty + 4); continue;
       }
       const q = [[cx0 - hx, cy0 - hy], [cx0 + hx, cy0 - hy], [cx0 + hx, cy0 + hy], [cx0 - hx, cy0 + hy]].map(([x, y]) => P(x, y, Z));
@@ -980,6 +1025,170 @@ $('s3q').oninput = e => { S3.q = e.target.value; render3DSide(); };
 $('s3layers').onchange = e => { const li = +e.target.dataset.li; e.target.checked ? S3.off.delete(li) : S3.off.add(li); render3DSide(); draw3D(); };
 $('s3moves').onclick = e => { const m = e.target.closest('.mv'); if (!m) return; S3.sel = S3.sel === m.dataset.k ? null : m.dataset.k; render3DSide(); draw3D(); };
 new ResizeObserver(() => draw3D()).observe($('s3stage'));
+
+/* ===== 教室座位編輯器 =====
+   每間教室是一個「排 × 列」的格子。點欄位上方的數字＝切換走道；點格子＝切換不開放（或在「門口」模式下設定門口位置）。
+   已經有學生排過的座位（綠點）不能改成走道、門口或不開放，資料庫也會再檢查一次。 */
+const ROOM = { list: [], cur: null, edit: null, dirty: false, mode: 'block', paint: null };
+const keyRC = (r, c) => r + '-' + c;
+const openSeats = e => e.rows * (e.cols - e.aisles.length) - e.blocked.length - (e.door_row ? 1 : 0);
+async function loadRooms(force) {
+  if (ROOM.dirty && !force) return renderRooms();
+  ROOM.list = await rpc('admin_rooms');
+  if (ROOM.cur !== 'new' && !ROOM.list.some(r => r.classroom_id === ROOM.cur)) ROOM.cur = ROOM.list[0]?.classroom_id || 'new';
+  pickRoom(ROOM.cur, true);
+}
+function pickRoom(id, silent) {
+  if (!silent && ROOM.dirty && !confirm('這間教室還沒儲存，確定要切換嗎？')) return;
+  ROOM.cur = id; ROOM.dirty = false; $('roomEdit').dataset.for = '';
+  const r = id === 'new' ? { classroom_id: null, name: '', rows: 6, cols: 14, aisles: [5, 10], door: '門口', door_row: 1, door_col: 1, blocked: [], used: [], courses: 0, seated: 0, has_layout: false }
+    : ROOM.list.find(x => x.classroom_id === id);
+  ROOM.edit = JSON.parse(JSON.stringify({ ...r, aisles: (r.aisles || []).map(Number) }));
+  ROOM.used = new Set((r.used || []).map(([a, b]) => keyRC(a, b)));
+  renderRooms();
+}
+function renderRooms() {
+  $('roomList').innerHTML = ROOM.list.map(r => {
+    const e = { ...r, aisles: (r.aisles || []).map(Number) };
+    return `<button class="rm ${ROOM.cur === r.classroom_id ? 'on' : ''}" data-id="${r.classroom_id}"><b>${esc(r.name)}</b>
+      <small>${r.has_layout ? `${r.rows} 排 × ${r.cols} 列・可坐 ${openSeats(e)} 位` : '尚未設定座位'}${r.courses ? `・${r.courses} 堂課` : ''}</small></button>`;
+  }).join('') + `<button class="rm ${ROOM.cur === 'new' ? 'on' : ''}" data-id="new" style="color:var(--navy)"><b>＋ 新增教室</b></button>`;
+  renderRoomEdit();
+}
+function renderRoomEdit() {
+  const e = ROOM.edit; if (!e) { $('roomEdit').innerHTML = ''; return; }
+  const bset = new Set(e.blocked.map(([a, b]) => keyRC(a, b)));
+  const tpl = ['28px', ...Array.from({ length: e.cols }, (_, i) => e.aisles.includes(i + 1) ? '22px' : 'minmax(34px,1fr)')].join(' ');
+  let g = '<div class="h rh"></div>';
+  for (let c = 1; c <= e.cols; c++) g += `<div class="h ${e.aisles.includes(c) ? 'aisle' : ''}" data-col="${c}" title="點一下切換第 ${c} 列是不是走道">${e.aisles.includes(c) ? '走' : c}</div>`;
+  for (let r = 1; r <= e.rows; r++) {
+    g += `<div class="h rh">${r}</div>`;
+    for (let c = 1; c <= e.cols; c++) {
+      const k = keyRC(r, c), used = ROOM.used.has(k) ? ' used' : '';
+      if (e.aisles.includes(c)) { g += `<div class="rc aisle"></div>`; continue; }
+      if (e.door_row === r && e.door_col === c) { g += `<div class="rc door" data-r="${r}" data-c="${c}">${esc(e.door || '門口')}</div>`; continue; }
+      if (bset.has(k)) { g += `<div class="rc blocked" data-r="${r}" data-c="${c}">不開放</div>`; continue; }
+      g += `<div class="rc${used}" data-r="${r}" data-c="${c}" title="${r}排${c}列${used ? '・已經有學生排過' : ''}"></div>`;
+    }
+  }
+  const isNew = !e.classroom_id;
+  if (!$('rBody') || $('roomEdit').dataset.for !== String(ROOM.cur)) {
+    $('roomEdit').dataset.for = ROOM.cur;
+    $('roomEdit').innerHTML = `
+    <div class="redit-head">
+      <input class="in" id="rName" value="${esc(e.name)}" placeholder="教室名稱，例如：一大">
+      <span class="muted" id="rStats"></span>
+      <span class="spacer"></span>
+      <span class="chip c-out" id="rDirty" hidden>尚未儲存</span>
+      <button class="btn ghost sm" id="rReset" disabled>復原</button>
+      <button class="btn sm" id="rSave">${isNew ? '新增教室' : '儲存'}</button>
+    </div><div id="rBody"></div>`;
+  }
+  $('rStats').innerHTML = `可坐 <b style="color:var(--navy)">${openSeats(e)}</b> 位・不開放 ${e.blocked.length} 位${e.courses ? `・${e.courses} 堂課在這間上課` : ''}${!isNew && e.capacity != null ? `・教室容量 ${e.capacity}` : ''}`;
+  $('rDirty').hidden = !ROOM.dirty; $('rReset').disabled = !ROOM.dirty;
+  $('rBody').innerHTML = `
+    <div class="redit-ctl">
+      <label>排數（前後）<span class="stepper"><button type="button" data-step="rows:-1">−</button><input id="rRows" value="${e.rows}" inputmode="numeric"><button type="button" data-step="rows:1">＋</button></span></label>
+      <label>列數（左右，含走道）<span class="stepper"><button type="button" data-step="cols:-1">−</button><input id="rCols" value="${e.cols}" inputmode="numeric"><button type="button" data-step="cols:1">＋</button></span></label>
+      <label>門口文字 <input class="in" id="rDoor" value="${esc(e.door || '')}" style="width:110px;padding:6px 10px"></label>
+    </div>
+    <div class="tools2">
+      <span class="muted">點格子：</span>
+      <button class="pill ${ROOM.mode === 'block' ? 'on' : ''}" data-mode="block">切換不開放</button>
+      <button class="pill ${ROOM.mode === 'door' ? 'on' : ''}" data-mode="door">設定門口位置</button>
+      <span class="muted">・點上方的列號＝切換走道・按住拖曳可以一次塗好幾格</span>
+    </div>
+    <div class="front">前　方</div>
+    <div class="rgrid" id="rGrid" style="grid-template-columns:${tpl}">${g}</div>
+    <div class="legend"><span><i></i>座位</span><span><i style="background:#5B5F66;border-color:#5B5F66"></i>不開放（例如柱子）</span>
+      <span><i style="background:repeating-linear-gradient(45deg,#F4F1EA,#F4F1EA 3px,#EAE5D9 3px,#EAE5D9 6px);border-color:transparent"></i>走道</span>
+      <span><i style="background:var(--lemon);border-color:var(--gold)"></i>門口</span>
+      <span><i style="position:relative"><b style="position:absolute;right:1px;top:1px;width:5px;height:5px;border-radius:50%;background:var(--mint-ink)"></b></i>已經有學生排過</span></div>
+    ${isNew ? '' : '<p class="muted" style="margin:10px 0 0">儲存後，在這間教室上課的每一堂課，座位表都會用新的配置。</p>'}`;
+}
+function roomChanged() { ROOM.dirty = true; renderRoomEdit(); }
+function setSize(k, v) {
+  const e = ROOM.edit; v = Math.max(1, Math.min(40, Math.round(+v || 0)));
+  if (v < e[k]) {
+    const lost = [...ROOM.used].some(x => { const [r, c] = x.split('-').map(Number); return k === 'rows' ? r > v : c > v; });
+    if (lost) { toast(`有學生排在第 ${v + 1} ${k === 'rows' ? '排' : '列'}以後，不能縮小。請先到座位表把他們移走。`, true); return renderRoomEdit(); }
+  }
+  e[k] = v;
+  e.aisles = e.aisles.filter(c => c <= e.cols);
+  e.blocked = e.blocked.filter(([r, c]) => r <= e.rows && c <= e.cols);
+  if (e.door_row && (e.door_row > e.rows || e.door_col > e.cols)) e.door_row = e.door_col = null;
+  roomChanged();
+}
+function toggleBlock(r, c, want) {
+  const e = ROOM.edit, k = keyRC(r, c), i = e.blocked.findIndex(([a, b]) => a === r && b === c), on = i >= 0;
+  if (want === on) return false;
+  if (!on && ROOM.used.has(k)) { toast(`${r}排${c}列已經有學生排過，請先到座位表把他移走`, true); return false; }
+  if (on) e.blocked.splice(i, 1); else e.blocked.push([r, c]);
+  return true;
+}
+$('roomList').onclick = ev => { const b = ev.target.closest('[data-id]'); if (b) pickRoom(b.dataset.id); };
+$('roomEdit').addEventListener('input', ev => {
+  const mark = () => { ROOM.dirty = true; $('rDirty').hidden = false; $('rReset').disabled = false; };
+  if (ev.target.id === 'rName') { ROOM.edit.name = ev.target.value; mark(); }
+  if (ev.target.id === 'rDoor') { ROOM.edit.door = ev.target.value; mark(); const d = $('rGrid').querySelector('.rc.door'); if (d) d.textContent = ev.target.value || '門口'; }
+});
+$('roomEdit').addEventListener('change', ev => {
+  if (ev.target.id === 'rRows') setSize('rows', ev.target.value);
+  if (ev.target.id === 'rCols') setSize('cols', ev.target.value);
+});
+$('roomEdit').addEventListener('click', async ev => {
+  const e = ROOM.edit, t = ev.target;
+  const st = t.closest('[data-step]'); if (st) { const [k, d] = st.dataset.step.split(':'); return setSize(k, e[k] + +d); }
+  const md = t.closest('[data-mode]'); if (md) { ROOM.mode = md.dataset.mode; return renderRoomEdit(); }
+  const h = t.closest('.h[data-col]');
+  if (h) {
+    const c = +h.dataset.col;
+    if (e.aisles.includes(c)) e.aisles = e.aisles.filter(x => x !== c);
+    else {
+      if ([...ROOM.used].some(x => +x.split('-')[1] === c)) return toast(`第 ${c} 列已經有學生排過，不能改成走道`, true);
+      e.aisles = [...e.aisles, c].sort((a, b) => a - b);
+      e.blocked = e.blocked.filter(([, b]) => b !== c);
+      if (e.door_col === c) e.door_row = e.door_col = null;
+    }
+    return roomChanged();
+  }
+  if (t.id === 'rReset') return pickRoom(ROOM.cur, true);
+  if (t.id === 'rSave') {
+    const n = (e.name || '').trim();
+    if (!n) { toast('請輸入教室名稱', true); return $('rName').focus(); }
+    try {
+      const id = await rpc('admin_save_room', { p: { ...e, name: n } });
+      toast(e.classroom_id ? `「${n}」已儲存` : `已新增教室「${n}」`);
+      ROOM.dirty = false; ROOM.cur = id; LOOK = null; await loadRooms(true);
+    } catch (err) { toast(err.message, true); }
+  }
+});
+// 點格子／拖曳塗色
+$('roomEdit').addEventListener('pointerdown', ev => {
+  const cell = ev.target.closest('.rc[data-r]'); if (!cell || ev.button > 0) return;
+  const r = +cell.dataset.r, c = +cell.dataset.c, e = ROOM.edit;
+  ev.preventDefault();
+  if (ROOM.mode === 'door') {
+    if (e.door_row === r && e.door_col === c) { e.door_row = e.door_col = null; return roomChanged(); }
+    if (ROOM.used.has(keyRC(r, c))) return toast(`${r}排${c}列已經有學生排過，不能設成門口`, true);
+    e.blocked = e.blocked.filter(([a, b]) => !(a === r && b === c));
+    e.door_row = r; e.door_col = c; return roomChanged();
+  }
+  if (e.door_row === r && e.door_col === c) return toast('這格是門口；要移動門口請切到「設定門口位置」', true);
+  const want = !cell.classList.contains('blocked');
+  ROOM.paint = { want, last: keyRC(r, c) };
+  if (toggleBlock(r, c, want)) roomChanged();
+});
+document.addEventListener('pointermove', ev => {
+  if (!ROOM.paint) return;
+  const el = document.elementFromPoint(ev.clientX, ev.clientY), cell = el && el.closest('#rGrid .rc[data-r]');
+  if (!cell || cell.classList.contains('door')) return;
+  const r = +cell.dataset.r, c = +cell.dataset.c, k = keyRC(r, c);
+  if (k === ROOM.paint.last) return; ROOM.paint.last = k;
+  if (toggleBlock(r, c, ROOM.paint.want)) roomChanged();
+});
+document.addEventListener('pointerup', () => { ROOM.paint = null; });
+window.addEventListener('beforeunload', ev => { if (ROOM.dirty) { ev.preventDefault(); ev.returnValue = ''; } });
 
 /* ===== 通用表格：排序、篩選、欄位顯示／順序、分頁、CSV、批次動作；版面存在資料庫 ===== */
 let PREFS = {}, LOOK = null, COURSES = null;
@@ -1836,7 +2045,7 @@ function setChgBadge(rows) {
 }
 const TB = {};
 const SUBTABS = {
-  courses: [['courses', '課程'], ['categories', '活動種類'], ['layouts', '教室座位格局']],
+  courses: [['courses', '課程'], ['categories', '活動種類']],
   attendance_fee: [['attendance_fee', '出席與學費'], ['fee_rules', '學費規則']],
 };
 // 學生名單：預設只看國三，可切換全部
