@@ -53,14 +53,15 @@
   .gearmenu a:hover{background:var(--grey)}
   /* 流程列：6 個業務階段＋目前階段的子流程 */
   .phasebar{display:flex;gap:10px;overflow-x:auto;margin-bottom:8px;padding-top:8px}
-  .phasebar a{flex:1;min-width:120px;text-decoration:none;color:var(--muted);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;position:relative}
+  .phasebar a{flex:1;min-width:110px;text-decoration:none;color:var(--muted);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:center;position:relative}
   .phasebar a b{color:var(--navy);font-size:14px}
   .phasebar a small{font-size:12px}
   .phasebar a.on{border-color:var(--navy);background:var(--navy)} .phasebar a.on b,.phasebar a.on small{color:#fff}
   .phasebar a.done:not(.on){background:#F4FAF6;border-color:var(--mint)}
   .phasebar a.now:not(.on){border-color:var(--gold)}
   .phasebar a .nowtag{position:absolute;right:8px;top:-9px;background:var(--gold);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px}
-  .subbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .subbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .subbar .arr{color:#8F8878;font-size:16px;font-weight:700}
   .subbar a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);font-size:14px;padding:6px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line)}
   .subbar a .d{width:8px;height:8px;border-radius:50%;background:#D9D4C7}
   .subbar a[data-state=done] .d{background:var(--mint-ink)} .subbar a[data-state=doing] .d{background:var(--sky-ink)}
@@ -577,7 +578,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const WEEK = '日一二三四五六';
-const md = d => { const x = new Date(d + 'T00:00'); return `${x.getMonth() + 1}/${x.getDate()}（${WEEK[x.getDay()]}）`; };
+// 日期一律顯示成 yyyy.mm.dd
+const p2 = n => String(n).padStart(2, '0');
+const ymd = d => { if (!d) return ''; const x = d instanceof Date ? d : new Date(String(d).length <= 10 ? d + 'T00:00' : d); return `${x.getFullYear()}.${p2(x.getMonth() + 1)}.${p2(x.getDate())}`; };
+const ymdhm = d => { if (!d) return ''; const x = new Date(d); return `${ymd(x)} ${p2(x.getHours())}:${p2(x.getMinutes())}`; };
+const md = d => ymd(d);
 const hm = t => String(t || '').slice(0, 5);
 function toast(t, err) { const el = $('toast'); el.textContent = t; el.className = 'toast' + (err ? ' err' : ''); el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, err ? 5000 : 2200); }
 async function rpc(fn, args) {
@@ -1435,7 +1440,7 @@ const SF = {
 const PHASE_OF = Object.fromEntries(PHASES.flatMap(ph => ph.steps.map(k => [k, ph])));
 let FLOW = null, FLOWS = {};
 const money = n => '$' + Number(n || 0).toLocaleString('zh-TW');
-const confirmedText = c => c ? `${c.by || '有人'}於 ${new Date(c.at).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })} 確認` : '';
+const confirmedText = c => c ? `${c.by || '有人'}於 ${ymdhm(c.at)} 確認` : '';
 
 function sfState(k, F = FLOW) {
   if (!F || !F.category) return { st: 'wait', x: '' };
@@ -1495,10 +1500,10 @@ function renderFlowChrome() {
     const sts = p.steps.map(k => sfState(k).st).filter(x => x !== 'plan');
     const done = sts.filter(x => x === 'done').length, all = sts.length;
     return `<a href="${wsHref(p.steps[0])}" data-ph="${p.k}" class="${p === ph ? 'on' : ''} ${p === nowPh ? 'now' : ''} ${all && done === all ? 'done' : ''}">
-      ${p === nowPh ? '<span class="nowtag">現在</span>' : ''}<b>${esc(p.t)}</b><small>${all ? `完成 ${done}／${all}` : '—'}</small></a>`;
+      ${p === nowPh ? '<span class="nowtag">現在</span>' : ''}<b>${esc(p.t)}</b></a>`;
   }).join('');
-  $('subbar').innerHTML = ph.steps.map(k => { const x = sfState(k);
-    return `<a href="${wsHref(k)}" data-state="${x.st}" class="${k === S.step ? 'on' : ''} ${k === now ? 'now' : ''}" title="${esc(x.x)}"><span class="d"></span>${esc(SF[k].t)}${k === 'changes' && CHG_N ? `（${CHG_N}）` : ''}</a>`; }).join('');
+  $('subbar').innerHTML = ph.steps.map((k, i) => { const x = sfState(k);
+    return (i ? '<span class="arr" aria-hidden="true">→</span>' : '') + `<a href="${wsHref(k)}" data-state="${x.st}" class="${k === S.step ? 'on' : ''} ${k === now ? 'now' : ''}" title="${esc(x.x)}"><span class="d"></span>${esc(SF[k].t)}${k === 'changes' && CHG_N ? `（${CHG_N}）` : ''}</a>`; }).join('');
   const x = sfState(S.step), isConfirm = SF[S.step].view === 'confirm', cf = (FLOW?.confirmed || {})[S.step];
   $('stephead').innerHTML = `<h2>${esc(SF[S.step].t)}</h2><span class="st">${esc(SF[S.step].d)}${x.x && !isConfirm ? `・<b>${esc(x.x)}</b>` : ''}</span>
     ${S.step === now ? '<span class="chip c-out">現在該做</span>' : ''}
@@ -1682,8 +1687,8 @@ function renderFormPage() {
   $('fDeadline').value = toLocalInput(c.reg_deadline);
   const dl = c.reg_deadline ? new Date(c.reg_deadline) : null, past = dl && dl < new Date();
   $('fStatus').innerHTML = !c.reg_open ? '目前<b>沒有開放</b>，家長打開報名表會看到「目前沒有開放報名的活動」。'
-    : past ? `已經在 ${dl.toLocaleString('zh-TW', { hour12: false })} <b>截止</b>，報名表不再顯示這個活動。`
-    : dl ? `報名開放中，<b>${dl.toLocaleString('zh-TW', { hour12: false })}</b> 截止。` : '報名開放中，沒有設定截止時間。';
+    : past ? `已經在 ${ymdhm(dl)} <b>截止</b>，報名表不再顯示這個活動。`
+    : dl ? `報名開放中，<b>${ymdhm(dl)}</b> 截止。` : '報名開放中，沒有設定截止時間。';
   $('fLink').textContent = FORM_URL(); $('fOpenLink').href = FORM_URL();
   $('fQuestions').innerHTML = FORM_QUESTIONS.map(([q, d], i) => `<li><b>${i + 1}. ${q}</b><span>${d}</span></li>`).join('');
 }
@@ -1742,7 +1747,7 @@ async function coursesOf(cat, force) {
   return COURSES;
 }
 const fmt = {
-  dt: v => v ? new Date(v).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '',
+  dt: v => v ? ymdhm(v) : '',
   date: v => v ? md(String(v).slice(0, 10)) : '',
   money: v => (v === null || v === undefined || v === '') ? '' : Number(v).toLocaleString('zh-TW'),
 };
@@ -1797,7 +1802,7 @@ class DataTable {
     if (v == null) return '';
     if (c.type === 'bool') return v ? '是' : '否';
     if (c.type === 'dt') return fmt.dt(v);
-    if (c.type === 'date') return String(v).slice(0, 10);
+    if (c.type === 'date') return ymd(String(v).slice(0, 10));
     return String(v);
   }
   rid(r) { return String(r[this.cfg.id]); }
@@ -1874,7 +1879,7 @@ class DataTable {
         <span class="spacer"></span>
         ${this.sel.size && cfg.bulk ? cfg.bulk.map((b, i) => `<button type="button" class="btn ghost sm" data-bulk="${i}">${esc(b.label)}</button>`).join('') : ''}
         ${filtered ? '<button type="button" class="btn ghost sm" data-act="clear">清除篩選</button>' : ''}
-        <button type="button" class="btn ghost sm" data-act="cols">欄位</button>
+        <button type="button" class="btn ghost sm" data-act="cols">顯示欄位</button>
         <button type="button" class="btn ghost sm" data-act="csv">${this.sel.size ? '匯出選取' : '匯出 CSV'}</button>
         ${cfg.onSave && cfg.canAdd !== false ? '<button type="button" class="btn sm" data-act="add">＋ 新增</button>' : ''}
       </div>
@@ -1966,9 +1971,8 @@ class DataTable {
     document.querySelector('.pop')?.remove();
     const p = document.createElement('div'); p.className = 'pop';
     const draw = () => {
-      p.innerHTML = '<div class="muted" style="margin-bottom:6px">勾選要顯示的欄位，用 ↑↓ 調整順序</div>' +
-        this.order.map((k, i) => `<div class="row"><input type="checkbox" id="pc_${k}" data-k="${k}" ${this.hidden.has(k) ? '' : 'checked'}><label for="pc_${k}">${esc(ttl(this.col(k)))}</label>
-          <button type="button" class="mv" data-up="${i}" ${i ? '' : 'disabled'} aria-label="上移">↑</button><button type="button" class="mv" data-dn="${i}" ${i < this.order.length - 1 ? '' : 'disabled'} aria-label="下移">↓</button></div>`).join('') +
+      p.innerHTML = '<div class="muted" style="margin-bottom:6px">勾選要顯示的欄位（要調整順序，直接左右拖曳表頭）</div>' +
+        this.order.map(k => `<div class="row"><input type="checkbox" id="pc_${k}" data-k="${k}" ${this.hidden.has(k) ? '' : 'checked'}><label for="pc_${k}">${esc(ttl(this.col(k)))}</label></div>`).join('') +
         '<div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="btn ghost sm" data-reset>還原預設</button><span class="spacer"></span><button type="button" class="btn sm" data-done>完成</button></div>';
     };
     draw(); document.body.appendChild(p);
@@ -2477,10 +2481,7 @@ const TABLES = {
       { k: 'teacher', t: '老師' },
       { k: 'subject', t: '科目分類', hide: true },
       { k: 'classroom', t: '教室' },
-      { k: 'enrolled', t: '報名人數', type: 'num' },
       { k: 'capacity', t: '名額', type: 'num', get: r => r.capacity ?? '' },
-      { k: 'remain', t: '剩餘名額', type: 'num', get: r => r.capacity == null ? '' : Math.max(0, r.capacity - r.enrolled) },
-      { k: 'sort', t: '排序', type: 'num', hide: true },
       { k: 'description', t: '描述', type: 'wrap', hide: true },
       { k: 'video_url', t: '影片連結', hide: true },
       { k: 'materials', t: '教材', type: 'wrap', hide: true },
@@ -2507,7 +2508,6 @@ const TABLES = {
         { k: 'subject_id', t: '科目分類', type: 'select', opts: LOOK.subjects.map(t => ({ v: t.id, t: t.name })) },
         { k: 'capacity', t: '名額', type: 'number', hint: '這堂課最多幾人；留白＝不限。額滿後報名表會自動停止這一科的報名' },
         { k: 'classroom_id', t: '教室', type: 'select', opts: LOOK.classrooms.map(t => ({ v: t.id, t: t.name })), hint: '座位表會用這間教室的座位格局' },
-        { k: 'sort', t: '排序', type: 'number', hint: '數字小的排前面' },
         { k: 'description', t: '描述', type: 'textarea' },
         { k: 'video_url', t: '影片連結', type: 'url' },
         { k: 'materials', t: '教材', type: 'textarea' },

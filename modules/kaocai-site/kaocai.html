@@ -198,7 +198,10 @@ if (p.get('theme') === 'dark' || p.get('theme') === 'light') document.documentEl
 
 const $ = id => document.getElementById(id);
 const WEEK = '日一二三四五六';
-const md = d => { const x = new Date(d + 'T00:00'); return `${x.getMonth() + 1}/${x.getDate()}（${WEEK[x.getDay()]}）`; };
+const p2 = n => String(n).padStart(2, '0');
+const ymd = d => { const x = d instanceof Date ? d : new Date(String(d).length <= 10 ? d + 'T00:00' : d); return `${x.getFullYear()}.${p2(x.getMonth() + 1)}.${p2(x.getDate())}`; };
+const ymdhm = d => { const x = new Date(d); return `${ymd(x)} ${p2(x.getHours())}:${p2(x.getMinutes())}`; };
+const md = d => ymd(d);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const val = name => document.querySelector(`input[name="${name}"]:checked`)?.value;
 const setVal = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${CSS.escape(v)}"]`); if (el) el.checked = true; return !!el; };
@@ -222,7 +225,7 @@ async function loadOptions() {
   CAT = cats[0];
   $('title').textContent = CAT.category + ' 報名';
   $('loc').textContent = CAT.location ? '📍 ' + CAT.location : '';
-  const desc = [CAT.description, CAT.deadline ? `報名截止：${new Date(CAT.deadline).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}` : ''].filter(Boolean).join('\n');
+  const desc = [CAT.description, CAT.deadline ? `報名截止：${ymdhm(CAT.deadline)}` : ''].filter(Boolean).join('\n');
   if (desc) { const d = $('catDesc'); d.textContent = desc; d.hidden = false; }
   if (!CAT.batches?.length) { $('loc').textContent = '目前還沒有開放報名的課程'; return false; }
   $('batches').innerHTML = CAT.batches.map((b, i) =>
@@ -331,7 +334,7 @@ async function loadMine() {
         <button class="btn small" data-edit="${i}">${cancelled ? '重新報名' : '修改報名'}</button>
         ${cancelled ? '' : `<button class="btn small danger" data-cancel="${i}">取消報名</button>`}
       </div>
-      <div class="meta" style="margin-top:6px">最後更新：${new Date(r.updated_at).toLocaleString('zh-TW')}</div>
+      <div class="meta" style="margin-top:6px">最後更新：${ymdhm(r.updated_at)}</div>
     </div>`;
   }).join('');
 }
