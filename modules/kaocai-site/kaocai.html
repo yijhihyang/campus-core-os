@@ -239,9 +239,13 @@ function renderCourses(selected) {
   let html = '', last = '';
   for (const c of b.courses) {
     if (c.date !== last) { html += `<div class="day">${md(c.date)}</div>`; last = c.date; }
-    const on = selected ? selected.includes(c.course_id) : true;
-    html += `<label class="subj"><input type="checkbox" value="${c.course_id}" data-date="${c.date}" data-start="${c.start}" data-end="${c.end}" ${on ? 'checked' : ''}><b>${esc(c.name)}</b>
-      <span class="t">${md(c.date)} ${c.start}–${c.end}${c.teacher ? '・' + esc(c.teacher) + ' 老師' : ''}</span></label>`;
+    const mine = selected ? selected.includes(c.course_id) : false;
+    // 額滿的課：已經報名的人保留，其他人不能再勾
+    const full = c.remaining === 0 && !mine;
+    const on = !full && (selected ? mine : true);
+    const left = c.remaining == null ? '' : full ? '・<b style="color:#B4505D">已額滿</b>' : c.remaining <= 5 ? `・剩 ${c.remaining} 位` : '';
+    html += `<label class="subj" ${full ? 'style="opacity:.55"' : ''}><input type="checkbox" value="${c.course_id}" data-date="${c.date}" data-start="${c.start}" data-end="${c.end}" ${on ? 'checked' : ''} ${full ? 'disabled' : ''}><b>${esc(c.name)}</b>
+      <span class="t">${md(c.date)} ${c.start}–${c.end}${c.teacher ? '・' + esc(c.teacher) + ' 老師' : ''}${left}</span></label>`;
   }
   $('subjects').innerHTML = html;
   renderMeals();
@@ -272,7 +276,7 @@ function collectMeals() {
   return out;
 }
 $('all').onclick = () => {
-  const boxes = [...$('subjects').querySelectorAll('input')];
+  const boxes = [...$('subjects').querySelectorAll('input:not(:disabled)')];
   const allOn = boxes.every(x => x.checked);
   boxes.forEach(x => x.checked = !allOn);
   renderMeals();
