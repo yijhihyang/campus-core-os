@@ -378,6 +378,39 @@
     @page{size:landscape;margin:10mm}
   }
   @media (max-width:820px){ .s3d{grid-template-columns:1fr} .shell{grid-template-columns:1fr} nav{position:static;height:auto;display:flex;flex-wrap:wrap;gap:4px} nav .sec,nav .brand{display:none} .seatwrap{grid-template-columns:1fr} }
+  /* 中央視窗、檢查清單、通知範本、報名統計 */
+  .mbg{position:fixed;inset:0;background:rgba(31,45,74,.35);z-index:60}
+  .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(31,45,74,.25);z-index:61}
+  .modal.wide{width:min(820px,calc(100vw - 32px))}
+  .modal header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .modal header h2{margin:0;font-size:17px;color:var(--navy);flex:1}
+  .modal .mbody{padding:16px 18px;overflow:auto}
+  .modal .mbody h3{margin:0 0 10px;font-size:16px;color:var(--navy)}
+  .modal footer{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+  .modal footer:empty{display:none}
+  .wzdots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .wzdots span{min-width:24px;height:24px;border-radius:999px;background:var(--grey);color:var(--muted);font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+  .wzdots span.on{background:var(--navy);color:#fff} .wzdots span.done{background:var(--mint);color:var(--mint-ink)}
+  .nmlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px} .nmlist span{background:var(--grey);border-radius:8px;padding:3px 8px;font-size:13px}
+  .ckgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .ckb{background:#fff;border-radius:18px;padding:16px 18px;border:1.5px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  .ckb.ok{border-color:var(--mint-ink);background:#F7FCF9}
+  .ckb .ckh{display:flex;align-items:center;gap:10px} .ckb h3{margin:0;font-size:16px;color:var(--navy);flex:1}
+  .ckb p{margin:0;font-size:13px} .ckb .ckstat{font-size:14px} .ckb .ckf{display:flex;gap:8px;margin-top:auto;padding-top:4px;flex-wrap:wrap}
+  .tpl textarea{width:100%;min-height:200px;font:inherit;font-size:14px;line-height:1.7;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;resize:vertical;box-sizing:border-box;margin-top:4px}
+  .toks{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+  .toks button{border:1px dashed var(--sky-ink);background:var(--sky);color:var(--sky-ink);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
+  .msgprev{white-space:pre-wrap;background:#F6F4EE;border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;line-height:1.7;margin:0}
+  .msgs .msg{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+  .msgs .msg .h{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .blk{margin:4px 0 10px;font-size:16px;color:var(--navy)}
+  .dash{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:14px;align-items:start}
+  .dash .card h3{margin:0 0 8px;font-size:14px;color:var(--navy)} .dash .big{font-size:40px;font-weight:700;color:var(--navy);line-height:1.2}
+  .statsmode th:nth-child(n+7),.statsmode td:nth-child(n+7){display:none}
+  .mealstats th:nth-child(7),.mealstats td:nth-child(7){display:none}
+  .exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+  .exp:first-of-type{border-top:none}
+  @media (max-width:900px){ .ckgrid,.dash{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -455,7 +488,13 @@
     </section>
 
     <!-- 前置作業：活動設定 -->
-    <section id="page-activity" hidden><div id="actView"></div></section>
+    <section id="page-activity" hidden><div id="actView"></div><div id="acHost" style="margin-top:12px"></div></section>
+
+    <!-- 報名作業：班內生報名狀態 -->
+    <section id="page-invite" hidden><div id="invView"></div><div id="invHost" style="margin-top:12px"></div></section>
+
+    <!-- 活動準備：活動前檢查清單 -->
+    <section id="page-checklist" hidden><div id="ckView"></div></section>
 
     <!-- 活動準備：名單、座位、餐點確認 -->
     <section id="page-confirm" hidden><div class="cfm" id="cfmView"></div></section>
@@ -466,6 +505,7 @@
 
     <!-- 2. 報名表設定 -->
     <section id="page-form" hidden>
+      <h3 class="blk">報名設定</h3>
       <div class="formset">
         <div class="card">
           <h3>開放與截止</h3>
@@ -480,7 +520,7 @@
           <h3>報名表連結</h3>
           <div class="linkrow"><code id="fLink"></code></div>
           <div class="linkrow" style="margin-top:8px"><button class="btn ghost sm" id="fCopy">複製連結</button><a class="btn ghost sm" id="fOpenLink" target="_blank" rel="noopener" style="text-decoration:none">開啟報名表預覽</a></div>
-          <div class="hint" style="margin-top:8px">報名表上方會顯示活動名稱、活動描述和上課地點；場次和課程來自第 1 步。</div>
+          <div class="hint" style="margin-top:8px">報名表上方會顯示活動名稱、活動描述和上課地點；場次和課程來自「活動與課程設定」。</div>
         </div>
         <div class="card" style="grid-column:1/-1">
           <h3>問卷項目與填寫流程</h3>
@@ -488,6 +528,8 @@
           <p class="muted" style="margin:10px 0 0">目前題目是固定的。自訂題目、調整順序、修改預設回答，會在下一階段做成可以在這裡編輯。</p>
         </div>
       </div>
+      <h3 class="blk" style="margin-top:22px">收費設定</h3>
+      <div id="feeHost"></div>
     </section>
 
     <!-- 6. 人數統計 -->
@@ -498,6 +540,7 @@
 
     <!-- 點名表 -->
     <section id="page-roll" hidden>
+      <div id="statsDash" hidden></div>
       <div class="summary" id="summary"></div>
       <div class="tabbar" id="courseTabs" role="tablist"></div>
       <div id="rollView">
@@ -506,10 +549,11 @@
           <input class="in" id="search" placeholder="搜尋姓名、學校">
           <label class="muted"><input type="checkbox" id="showCx"> 顯示已取消</label>
           <span class="spacer"></span>
+          <button class="btn ghost sm" id="printStrips" hidden>列印名條</button>
           <button class="btn ghost sm" id="copyNames">複製姓名</button>
           <button class="btn ghost sm" id="csv">匯出 CSV</button>
         </div>
-        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>點名</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="tbl"><table id="rollTbl"><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>當天中餐</th><th>點名</th><th>講義</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
       </div>
       <div id="mealView" hidden>
         <div class="pills" id="mealDays" style="margin-bottom:8px"></div>
@@ -520,7 +564,7 @@
           <button class="btn ghost sm" id="copyMeal">複製訂餐摘要</button>
           <button class="btn ghost sm" id="mealCsv">匯出 CSV</button>
         </div>
-        <div class="tbl"><table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>餐點</th><th>取餐</th></tr></thead><tbody id="mealRows"></tbody></table></div>
+        <div class="tbl"><table id="mealTbl"><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>家長電話</th><th>餐點</th><th>取餐</th></tr></thead><tbody id="mealRows"></tbody></table></div>
       </div>
     </section>
 
@@ -597,6 +641,13 @@
   <footer id="dFoot"></footer>
 </aside>
 
+<div class="mbg" id="mBg" hidden></div>
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <header><h2 id="mTitle"></h2><button class="btn ghost sm" id="mClose">關閉</button></header>
+  <div class="mbody" id="mBody"></div>
+  <footer id="mFoot"></footer>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -614,8 +665,17 @@ const ymdhm = d => { if (!d) return ''; const x = new Date(d); return `${ymd(x)}
 const md = d => ymd(d);
 const hm = t => String(t || '').slice(0, 5);
 function toast(t, err) { const el = $('toast'); el.textContent = t; el.className = 'toast' + (err ? ' err' : ''); el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, err ? 5000 : 2200); }
+// 活動前檢查清單確認後，會影響名單／座位／餐點的修改要先提醒，確定後清單回到「待確認」
+const CK_GUARD = new Set(['admin_save_registration', 'admin_set_registration_status', 'admin_set_item_status', 'admin_place_seat', 'admin_unseat', 'admin_copy_seats', 'admin_set_meal', 'admin_delete_registration']);
+let CK_OK_UNTIL = 0;
 async function rpc(fn, args) {
+  const guarded = CK_GUARD.has(fn) && S.cat && FLOW && FLOW.category === S.cat;
+  if (guarded && CK_STEPS.some(k => (FLOW.confirmed || {})[k]) && Date.now() > CK_OK_UNTIL) {
+    if (!confirm('「活動前檢查清單」已經確認無誤。\n這個修改會讓名單、座位、餐點確認回到「待確認」，之後需要重新確認。\n\n確定要修改嗎？')) throw new Error('已取消修改');
+    CK_OK_UNTIL = Date.now() + 10000;
+  }
   const { data, error } = await sb.rpc(fn, args);
+  if (guarded && !error) setTimeout(() => loadFlow().catch(() => {}), 300);
   if (error) {
     if (/Could not find the function|does not exist/i.test(error.message) && fn === 'admin_unseat')
       throw new Error('「移回未排」功能尚未啟用，請先在 Supabase 執行「啟用刪除功能.sql」');
@@ -687,9 +747,9 @@ function fillBatches() {
   $('regOpen').querySelector('span:last-child').textContent = c?.reg_open ? '報名開放中' : '報名已關閉';
 }
 // 上方的活動選單＝切換工作空間（停在同一個子流程）
-$('cat').onchange = () => { location.hash = wsHref(S.step || 'activity', $('cat').value); };
+$('cat').onchange = () => { location.hash = wsHref(S.step || 'act_course', $('cat').value); };
 $('batch').onchange = () => {
-  if (S.view === 'table') S.tbatch = $('batch').value;
+  if (S.step && SF[S.step].batch === 'all') S.tbatch = $('batch').value;
   else { S.batch = $('batch').value; S.course = S.seatCourse = null; }
   reload();
 };
@@ -703,12 +763,13 @@ $('refresh').onclick = () => reload();
 
 /* ===== 路由 =====
    #home：活動列表　#students：學生名單（齒輪選單）　#w/<活動>/<子流程>：活動工作空間 */
-const VIEWS = ['home', 'activity', 'form', 'stats', 'roll', 'seats', 'rooms', 'confirm', 'plan', 'table'];
+const VIEWS = ['home', 'activity', 'invite', 'checklist', 'form', 'stats', 'roll', 'seats', 'rooms', 'confirm', 'plan', 'table'];
 function route() {
   const parts = location.hash.slice(1).split('/');
   let step = null, view = 'home', cat = S.cat;
   if (parts[0] === 'w' && parts.length >= 3) {
     cat = decodeURIComponent(parts[1]); step = parts[2];
+    if (STEP_ALIAS[step]) { location.replace(wsHref(STEP_ALIAS[step], cat)); return; }
     if (!CATS.some(c => c.category === cat) || !SF[step]) { location.hash = '#home'; return; }
     view = SF[step].view;
   } else if (parts[0] === 'students') { location.hash = '#set/students'; return; }
@@ -733,7 +794,7 @@ function route() {
   $('batch').hidden = !bmode; $('regOpen').hidden = !step;
   fillBatches();
   renderFlowChrome();
-  closeDrawer();
+  closeDrawer(); closeModal();
   window.scrollTo(0, 0);
   reload();
 }
@@ -745,8 +806,10 @@ async function reload() {
     if (S.step) loadFlow().catch(() => {});
     switch (S.view) {
       case 'home': await renderHome(); break;
-      case 'activity': if (!FLOW) await loadFlow(); await renderActivity(); break;
-      case 'form': renderFormPage(); break;
+      case 'activity': if (!FLOW) await loadFlow(); await renderActivity(); await mountTable('courses', $('acHost')); break;
+      case 'form': renderFormPage(); await mountTable('fee_rules', $('feeHost')); break;
+      case 'invite': await renderInvite(); break;
+      case 'checklist': if (!FLOW) await loadFlow(); await renderChecklist(); break;
       case 'stats': await loadStats(); break;
       case 'roll': S.rollMode = SF[S.step].mode; await loadBoard(); break;
       case 'seats': await loadBoardThenSeats(); break;
@@ -758,7 +821,7 @@ async function reload() {
     $('updated').textContent = new Date().toLocaleTimeString('zh-TW', { hour12: false });
   } catch (e) { toast(e.message, true); }
 }
-setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && ['roll', 'seats', 'stats', 'confirm'].includes(S.view) && !document.activeElement?.matches('input,textarea,select')) reload(); }, 15000);
+setInterval(() => { if (!document.hidden && !$('app').hidden && !dragging && !S3.down && $('panel').hidden && $('modal').hidden && ['roll', 'seats', 'stats', 'checklist'].includes(S.view) && !document.activeElement?.matches('input,textarea,select')) reload(); }, 15000);
 // 齒輪選單
 $('gearBtn').onclick = e => { e.stopPropagation(); $('gearMenu').hidden = !$('gearMenu').hidden; };
 document.addEventListener('click', e => { if (!e.target.closest('.gearwrap')) $('gearMenu').hidden = true; });
@@ -768,9 +831,14 @@ let BOARD = null;
 async function loadBoard() {
   BOARD = await rpc('admin_board', { p_category: S.cat, p_batch: S.batch });
   // 出席點名只看各科名單；餐點發放只看取餐名單
+  const st = S.rollMode === 'stats';
   if (S.rollMode === 'meal') S.course = 'meal';
-  else if (!S.course || S.course === 'meal' || !BOARD.courses.some(c => c.course_id === S.course)) S.course = orderedCourses()[0]?.course_id || null;
-  $('courseTabs').hidden = $('summary').hidden = S.rollMode === 'meal';
+  else if (!S.course || (S.course === 'meal' && !st) || (S.course !== 'meal' && !BOARD.courses.some(c => c.course_id === S.course))) S.course = orderedCourses()[0]?.course_id || null;
+  $('courseTabs').hidden = S.rollMode === 'meal'; $('summary').hidden = S.rollMode === 'meal' || st;
+  $('statsDash').hidden = !st; $('printStrips').hidden = !st;
+  $('rollTbl').classList.toggle('statsmode', st); $('mealTbl').classList.toggle('mealstats', st);
+  $('showCx').parentElement.hidden = st;
+  if (st) { S.showCx = false; renderStatsDash(); }
   renderTabs(); renderRoll();
 }
 // 分頁順序：國 英 數 自 社，其他課接在後面（依上課時間）
@@ -782,7 +850,7 @@ function orderedCourses() {
 function renderTabs() {
   $('courseTabs').innerHTML = orderedCourses().map(c =>
     `<button type="button" role="tab" class="${S.course === c.course_id ? 'on' : ''}" data-c="${c.course_id}">${esc(c.course_name)}名單<span class="n">${c.enrolled}</span></button>`).join('') +
-    '';
+    (S.rollMode === 'stats' ? `<button type="button" role="tab" class="${S.course === 'meal' ? 'on' : ''}" data-c="meal">訂餐名單<span class="n">${BOARD.meal_counts.reduce((n, m) => n + m.total, 0)}</span></button>` : '');
   renderSummary();
 }
 // 上方統計：每科一張小卡（點一下切換名單）＋訂餐卡
@@ -824,12 +892,12 @@ function renderRoll() {
   if (isMeal) return renderMeals();
   const c = BOARD.courses.find(x => x.course_id === S.course);
   if (!c) { $('rows').innerHTML = ''; return; }
-  $('courseInfo').textContent = `${md(c.course_date)} ${hm(c.start_time)}–${hm(c.end_time)}${c.teacher_name ? '・' + c.teacher_name + ' 老師' : ''}・已到班 ${c.attended}／未到班 ${c.absent}／未點名 ${c.unmarked}`;
+  $('courseInfo').textContent = `${md(c.course_date)} ${hm(c.start_time)}–${hm(c.end_time)}${c.teacher_name ? '・' + c.teacher_name + ' 老師' : ''}・` + (S.rollMode === 'stats' ? `共 ${c.enrolled} 人報名` : `已到班 ${c.attended}／未到班 ${c.absent}／未點名 ${c.unmarked}`);
   const rows = currentRows();
   $('rows').innerHTML = rows.map((r, i) => {
     const cx = r.status === '已取消';
     const elig = lunchEligible(r.registration_id, r.course_date);
-    const meal = elig && !cx
+    const meal = S.rollMode === 'stats' ? (elig ? esc(r.meal || '不訂餐') : '<span class="muted">未跨中午</span>') : elig && !cx
       ? `<select class="meal" data-meal="${r.registration_id}" data-date="${r.course_date}">${['葷食', '素食', '不訂餐'].map(m => `<option ${r.meal === m ? 'selected' : ''}>${m}</option>`).join('')}</select>`
       : `<span class="muted">${cx ? '—' : '未跨中午'}</span>`;
     const att = cx ? '<span class="chip c-cx">已取消</span>' :
@@ -898,13 +966,13 @@ function renderMeals() {
   if (!S.mealDay) { $('mealInfo').textContent = '這個場次沒有需要訂餐的日子'; $('mealRows').innerHTML = ''; return; }
   const all = BOARD.meal_list.filter(x => x.course_date === S.mealDay && x.meal !== '不訂餐');
   const n = k => all.filter(x => x.meal === k).length, got = all.filter(x => x.picked_up).length;
-  $('mealInfo').textContent = `${md(S.mealDay)}・葷食 ${n('葷食')} 份・素食 ${n('素食')} 份・已取餐 ${got}／${all.length}`;
+  $('mealInfo').textContent = `${md(S.mealDay)}・葷食 ${n('葷食')} 份・素食 ${n('素食')} 份` + (S.rollMode === 'stats' ? `・共 ${all.length} 份` : `・已取餐 ${got}／${all.length}`);
   const rows = mealRowsOf(S.mealDay);
   $('mealRows').innerHTML = rows.map((r, i) => `<tr>
       <td>${i + 1}</td><td class="nm"><b>${esc(r.name)}</b></td>
       <td><span class="chip ${r.affiliation === '班外生' ? 'c-out' : 'c-in'}">${r.affiliation === '班外生' ? '班外' : '班內'}</span></td>
       <td>${esc(r.school || '')}</td><td>${esc(r.parent_phone || '')}</td>
-      <td><select class="meal" data-mreg="${r.registration_id}">${['葷食', '素食', '不訂餐'].map(m => `<option ${r.meal === m ? 'selected' : ''}>${m}</option>`).join('')}</select></td>
+      <td>${S.rollMode === 'stats' ? esc(r.meal) : `<select class="meal" data-mreg="${r.registration_id}">${['葷食', '素食', '不訂餐'].map(m => `<option ${r.meal === m ? 'selected' : ''}>${m}</option>`).join('')}</select>`}</td>
       <td><span class="att" data-pick="${r.registration_id}">
         <button class="u ${r.picked_up ? '' : 'on'}" data-v="false">未取餐</button>
         <button class="y ${r.picked_up ? 'on' : ''}" data-v="true">已取餐</button></span></td></tr>`).join('')
@@ -1454,29 +1522,24 @@ const SET = {
   apply(c);
   btn.onclick = () => { c = !side.classList.contains('collapsed'); apply(c); try { localStorage.setItem('sideCollapsed', c ? '1' : '0'); } catch (e) {} };
 })();
+// 頁面依 Notion「考猜活動頁面對應流程」：一個頁面可以包含好幾個子流程
 const PHASES = [
-  { k: 'prep', t: '前置作業', steps: ['activity', 'courses', 'form', 'fees'] },
-  { k: 'reg', t: '報名作業', steps: ['launch', 'roster', 'stats', 'changes', 'seats'] },
-  { k: 'ready', t: '活動準備', steps: ['confirm_roster', 'confirm_seats', 'notify_attend', 'confirm_meal'] },
+  { k: 'prep', t: '前置作業', steps: ['act_course', 'reg_fee'] },
+  { k: 'reg', t: '報名作業', steps: ['invite', 'regs', 'stats', 'seats'] },
+  { k: 'ready', t: '活動準備', steps: ['checklist'] },
   { k: 'day', t: '活動當日', steps: ['roll', 'meal'] },
   { k: 'settle', t: '活動結算', steps: ['billing', 'notify_pay', 'pay_track'] },
   { k: 'award', t: '成績與獎勵', steps: ['scores', 'award_rules', 'award_issue', 'notify_award', 'award_track'] },
 ];
-// view：這一步用哪個畫面；tabs：表格頁的分頁；batch：場次選單（all＝可選全部場次、one＝一次一個場次）
+// view：這一頁用哪個畫面；tabs：表格頁的分頁；batch：場次選單（all＝可選全部場次、one＝一次一個場次）；sub：這一頁包含的子流程
 const SF = {
-  activity: { t: '活動設定', view: 'activity', d: '建立活動，填寫活動名稱、活動日期、活動地點、活動描述（DM 等）、活動場次。' },
-  courses: { t: '課程設定', view: 'table', tabs: [['courses', '課程']], batch: 'all', d: '建立課程：活動場次、課程名稱、授課老師、課程日期、時間、星期、教室，以及每堂課的名額。' },
-  form: { t: '報名設定', view: 'form', d: '建立報名表單內容與連結，設定報名期限、修改與取消報名規則。' },
-  fees: { t: '收費設定', view: 'table', tabs: [['fee_rules', '收費標準']], d: '建立收費標準（依報名科數）。優惠條件（多科、兄姊是班內生、成績優良、主任折扣）下一階段加入。' },
-  launch: { t: '報名啟動與通知', view: 'table', tabs: [['target', '應報名名單']], d: '確認活動內容與報名表都已就緒，產生應報名名單，發送報名通知，記錄已發送、未發送、發送次數。' },
-  roster: { t: '名冊查詢', view: 'table', tabs: [['registrations_ro', '報名總名單'], ['logs', '修改紀錄'], ['unreg', '尚未報名']], batch: 'all', d: '查詢目前報名總名單（各課程是否報名、是否訂餐）、報名修改紀錄（誰改的、改了什麼），比對應報名名單找出尚未報名者。' },
-  stats: { t: '報名統計', view: 'stats', d: '統計各課程報名人數、剩餘名額、訂餐人數（葷食／素食）、應報名名單中尚未報名者。' },
-  changes: { t: '報名異動', view: 'table', tabs: [['registrations', '報名資料'], ['changes', '資料異動審核']], batch: 'all', d: '新增、修改、取消報名，處理特殊異動；審核家長修改的學校與電話。' },
-  seats: { t: '座位配置', view: 'seats', batch: 'one', d: '針對已報名者分配與調整座位，檢查未分配座位的學生、重複座位、剩餘座位。' },
-  confirm_roster: { t: '名單確認', view: 'confirm', d: '確認各科名單是否正確，若是，產生各科點名表。' },
-  confirm_seats: { t: '座位與教室確認', view: 'confirm', d: '確認教室配置與座位是否正確，若是，產生座位表。' },
-  notify_attend: { t: '參加通知', view: 'plan', d: '活動開始前提醒報名者參加，保留通知紀錄：誰通知了、誰還沒通知、通知幾次。' },
-  confirm_meal: { t: '餐點確認', view: 'confirm', d: '確認訂餐名單是否正確，以及訂餐店家、份數、配送時間。' },
+  act_course: { t: '活動與課程設定', view: 'activity', batch: 'all', sub: '活動設定・課程設定', d: '上方是活動資料（名稱、地點、描述、場次），下方是課程表（日期、時間、老師、教室、名額）。' },
+  reg_fee: { t: '報名與收費設定', view: 'form', sub: '報名設定・收費設定', d: '上方設定報名表（開放、截止、連結），下方設定收費標準。' },
+  invite: { t: '班內生報名狀態', view: 'invite', sub: '報名啟動', d: '發送活動報名訊息給班內生，追蹤每位班內生是否已報名、是否已通知。' },
+  regs: { t: '報名總覽', view: 'table', tabs: [['registrations', '報名總表'], ['logs', '修改紀錄'], ['changes', '資料異動審核']], batch: 'all', sub: '報名查詢・報名異動', d: '已報名的名單。行政老師新增、修改、取消報名都在這一頁。' },
+  stats: { t: '報名統計', view: 'roll', mode: 'stats', batch: 'one', sub: '報名統計', d: '上方是報名統計，下方是國文、英文、數學、自然、社會、訂餐的名條。' },
+  seats: { t: '座位配置', view: 'seats', batch: 'one', sub: '座位配置', d: '針對已報名者分配與調整座位，檢查未分配座位的學生、剩餘座位。' },
+  checklist: { t: '活動前檢查清單', view: 'checklist', sub: '名單確認・座位與教室確認・餐點確認・參加通知', d: '四個區塊逐一確認無誤；確認後若報名資料有變動，會回到待確認。' },
   roll: { t: '出席點名', view: 'roll', mode: 'att', batch: 'one', d: '在點名表上記錄出席、缺席、遲到、缺席原因與異常處理（例如未報名臨時參加、改線上補課）。' },
   meal: { t: '餐點發放', view: 'roll', mode: 'meal', batch: 'one', d: '在取餐登記表上記錄是否取餐，以及異常處理（例如餐點轉讓給其他報名者）。' },
   billing: { t: '費用開立', view: 'table', tabs: [['attendance_fee', '應收費用']], batch: 'all', d: '依照實際出席及適用的收費規則計算應收費用。' },
@@ -1488,6 +1551,10 @@ const SF = {
   notify_award: { t: '領獎通知', view: 'plan', d: '通知學生或家長領取。' },
   award_track: { t: '領獎狀態追蹤', view: 'table', tabs: [['exam_results', '領獎狀態']], d: '確認領取、追蹤未領取、保留紀錄。' },
 };
+// 舊網址（一個子流程一頁）轉到新頁面
+const STEP_ALIAS = { activity: 'act_course', courses: 'act_course', form: 'reg_fee', fees: 'reg_fee', launch: 'invite', roster: 'regs', changes: 'regs',
+  confirm_roster: 'checklist', confirm_seats: 'checklist', confirm_meal: 'checklist', notify_attend: 'checklist' };
+const CK_STEPS = ['confirm_roster', 'confirm_seats', 'confirm_meal'];
 const PHASE_OF = Object.fromEntries(PHASES.flatMap(ph => ph.steps.map(k => [k, ph])));
 let FLOW = null, FLOWS = {};
 const money = n => '$' + Number(n || 0).toLocaleString('zh-TW');
@@ -1497,25 +1564,26 @@ function sfState(k, F = FLOW) {
   if (!F || !F.category) return { st: 'wait', x: '' };
   if (SF[k].view === 'plan') return { st: 'plan', x: '下一階段完成' };
   const before = !F.first_date || F.today < F.first_date, after = F.last_date && F.today > F.last_date;
-  const cf = (F.confirmed || {})[k];
   switch (k) {
-    case 'activity': return F.batches || F.courses ? { st: 'done', x: F.batches ? `${F.batches} 個場次` : '不分場次' } : { st: 'todo', x: '還沒設定場次' };
-    case 'courses': return !F.courses ? { st: 'todo', x: '還沒有課程' }
-      : F.courses_no_room ? { st: 'todo', x: `${F.courses_no_room} 堂課未選教室` }
-      : F.rooms_no_layout ? { st: 'todo', x: `${F.rooms_no_layout} 間教室未設定座位（到左側「設定 › 教室」）` }
-      : F.courses_no_teacher ? { st: 'doing', x: `${F.courses_no_teacher} 堂課未指定老師` }
-      : F.courses_no_capacity ? { st: 'doing', x: `${F.courses} 堂課・${F.courses_no_capacity} 堂未設名額` } : { st: 'done', x: `${F.courses} 堂課` };
-    case 'teachers': return !F.courses ? { st: 'wait', x: '先建立課程' } : F.courses_no_teacher ? { st: 'todo', x: `${F.courses_no_teacher} 堂課未指定老師` } : F.teachers_no_bio ? { st: 'doing', x: `${F.teachers_no_bio} 位老師未填介紹` } : { st: 'done', x: '老師都設定好了' };
-    case 'rooms': return !F.courses ? { st: 'wait', x: '先建立課程' } : F.courses_no_room ? { st: 'todo', x: `${F.courses_no_room} 堂課未選教室` } : F.rooms_no_layout ? { st: 'todo', x: `${F.rooms_no_layout} 間教室未設定座位` } : { st: 'done', x: '教室都設定好了' };
-    case 'form': return F.reg_open ? { st: 'done', x: '報名開放中' } : F.registrations ? { st: 'done', x: '報名已關閉' } : { st: 'todo', x: '還沒開放報名' };
-    case 'fees': return F.fee_rules ? { st: 'done', x: `${F.fee_rules} 條收費標準` } : { st: 'todo', x: '還沒設定收費' };
-    case 'launch': return F.reg_open || F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `應報名 ${F.target} 人・已報名 ${F.target_registered} 人` } : { st: 'wait', x: '開放報名後開始' };
-    case 'roster': return F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `共 ${F.registrations} 人報名` } : { st: 'wait', x: '還沒有人報名' };
+    case 'act_course':
+      if (!F.batches && !F.courses) return { st: 'todo', x: '還沒設定活動場次' };
+      return !F.courses ? { st: 'todo', x: '還沒有課程' }
+        : F.courses_no_room ? { st: 'todo', x: `${F.courses_no_room} 堂課未選教室` }
+        : F.rooms_no_layout ? { st: 'todo', x: `${F.rooms_no_layout} 間教室未設定座位（到左側「設定 › 教室」）` }
+        : F.courses_no_teacher ? { st: 'doing', x: `${F.courses_no_teacher} 堂課未指定老師` }
+        : F.courses_no_capacity ? { st: 'doing', x: `${F.courses} 堂課・${F.courses_no_capacity} 堂未設名額` } : { st: 'done', x: `${F.courses} 堂課` };
+    case 'reg_fee':
+      if (!F.fee_rules) return { st: 'todo', x: '還沒設定收費標準' };
+      return F.reg_open ? { st: 'done', x: '報名開放中' } : F.registrations ? { st: 'done', x: '報名已關閉' } : { st: 'todo', x: '還沒開放報名' };
+    case 'invite': return F.reg_open || F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `應報名 ${F.target} 人・已報名 ${F.target_registered} 人` } : { st: 'wait', x: '開放報名後開始' };
+    case 'regs': return F.pending_changes ? { st: 'doing', x: `${F.pending_changes} 筆資料待審核` } : F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `共 ${F.registrations} 人報名` } : { st: 'wait', x: '還沒有人報名' };
     case 'stats': return F.registrations ? { st: F.reg_open ? 'doing' : 'done', x: `${F.items} 科次・${F.meals} 份餐${F.courses_full ? `・${F.courses_full} 堂額滿` : ''}` } : { st: 'wait', x: '還沒有人報名' };
-    case 'changes': return F.pending_changes ? { st: 'doing', x: `${F.pending_changes} 筆資料待審核` } : F.registrations ? { st: 'done', x: '沒有待處理的異動' } : { st: 'wait', x: '還沒有人報名' };
     case 'seats': return !F.items ? { st: 'wait', x: '還沒有人報名' } : F.items_seated >= F.items ? { st: 'done', x: `${F.items} 科次都排好了` } : { st: 'doing', x: `已排 ${F.items_seated}／${F.items} 科次` };
-    case 'confirm_roster': case 'confirm_seats': case 'confirm_meal':
-      return cf ? { st: 'done', x: confirmedText(cf) } : F.registrations ? { st: 'todo', x: '還沒確認' } : { st: 'wait', x: '報名後確認' };
+    case 'checklist': {
+      if (!F.registrations) return { st: 'wait', x: '報名後確認' };
+      const n = CK_STEPS.filter(s => (F.confirmed || {})[s]).length;
+      return n === CK_STEPS.length ? { st: 'done', x: '名單、座位、餐點都已確認無誤' } : { st: n ? 'doing' : 'todo', x: `已確認 ${n}／${CK_STEPS.length} 項` };
+    }
     case 'roll': return before ? { st: 'wait', x: F.first_date ? `${md(F.first_date)} 開始` : '還沒有上課日期' }
       : F.items_due_today && F.items_marked >= F.items_due_today ? { st: 'done', x: `已點名 ${F.items_marked} 科次` } : { st: 'doing', x: `已點名 ${F.items_marked}／${F.items_due_today} 科次` };
     case 'meal': return !F.meals ? { st: 'wait', x: '沒有人訂餐' } : before ? { st: 'wait', x: `${F.meals} 份待發放` } : F.meals_picked >= F.meals ? { st: 'done', x: '全部取餐完畢' } : { st: 'doing', x: `已取 ${F.meals_picked}／${F.meals} 份` };
@@ -1528,15 +1596,15 @@ function sfState(k, F = FLOW) {
   return { st: 'wait', x: '' };
 }
 function currentStep(F = FLOW) {
-  if (!F || !F.category) return 'activity';
+  if (!F || !F.category) return 'act_course';
   const notDone = ks => ks.find(k => !['done', 'plan'].includes(sfState(k, F).st));
   if (F.first_date && F.today >= F.first_date && F.today <= F.last_date) return 'roll';
   if (F.last_date && F.today > F.last_date) return notDone(['billing', 'pay_track', 'scores', 'award_issue', 'award_track']) || 'award_track';
   // 前置作業只有「還沒做」才擋住流程；部分完成（例如老師還沒填介紹）不擋
   const todo = ks => ks.find(k => sfState(k, F).st === 'todo');
-  return todo(PHASES[0].steps) || (F.pending_changes ? 'changes' : null)
-    || (F.reg_open ? (F.items && F.items_seated < F.items ? 'seats' : 'roster') : null)
-    || notDone(['seats', 'confirm_roster', 'confirm_seats', 'confirm_meal']) || 'roll';
+  return todo(PHASES[0].steps) || (F.pending_changes ? 'regs' : null)
+    || (F.reg_open ? (F.items && F.items_seated < F.items ? 'seats' : 'regs') : null)
+    || notDone(['seats', 'checklist']) || 'roll';
 }
 async function loadFlow() {
   if (!S.cat) return;
@@ -1563,9 +1631,9 @@ function renderFlowChrome() {
       ${p === nowPh ? '<span class="nowtag">現在</span>' : ''}<b>${esc(p.t)}</b></a>`;
   }).join('');
   $('subbar').innerHTML = ph.steps.map((k, i) => { const x = sfState(k);
-    return (i ? '<span class="arr" aria-hidden="true">→</span>' : '') + `<a href="${wsHref(k)}" data-state="${x.st}" class="${k === S.step ? 'on' : ''} ${k === now ? 'now' : ''}" title="${esc(x.x)}"><span class="d"></span>${esc(SF[k].t)}${k === 'changes' && CHG_N ? `（${CHG_N}）` : ''}</a>`; }).join('');
+    return (i ? '<span class="arr" aria-hidden="true">→</span>' : '') + `<a href="${wsHref(k)}" data-state="${x.st}" class="${k === S.step ? 'on' : ''} ${k === now ? 'now' : ''}" title="${esc(x.x)}"><span class="d"></span>${esc(SF[k].t)}${k === 'regs' && CHG_N ? `（${CHG_N}）` : ''}</a>`; }).join('');
   const x = sfState(S.step), isConfirm = SF[S.step].view === 'confirm', cf = (FLOW?.confirmed || {})[S.step];
-  $('stephead').innerHTML = `<h2>${esc(SF[S.step].t)}</h2><span class="st">${esc(SF[S.step].d)}${x.x && !isConfirm ? `・<b>${esc(x.x)}</b>` : ''}</span>
+  $('stephead').innerHTML = `<h2>${esc(SF[S.step].t)}</h2>${SF[S.step].sub && SF[S.step].sub !== SF[S.step].t ? `<span class="chip c-grey" title="這一頁包含的子流程">${esc(SF[S.step].sub)}</span>` : ''}<span class="st">${esc(SF[S.step].d)}${x.x && !isConfirm ? `・<b>${esc(x.x)}</b>` : ''}</span>
     ${S.step === now ? '<span class="chip c-out">現在該做</span>' : ''}
     ${isConfirm ? `<span class="confirmbox">${cf ? `<span class="chip c-in">✓ ${esc(confirmedText(cf))}</span><button class="btn ghost sm" data-unconfirm>取消確認</button>`
       : `<button class="btn sm" data-confirm>確認無誤</button>`}</span>` : ''}`;
@@ -1616,7 +1684,7 @@ async function renderActivity() {
         <dt>活動日期</dt><dd>${dates}</dd>
         <dt>活動地點</dt><dd>${esc(a.location || '—')}</dd>
         <dt>活動描述</dt><dd>${esc(a.description || '—')}</dd>
-        <dt>開放報名</dt><dd>${a.reg_open ? '是' : '否'}（在「報名設定」調整）</dd>
+        <dt>開放報名</dt><dd>${a.reg_open ? '是' : '否'}（在「報名與收費設定」調整）</dd>
       </dl>
       <p class="muted" style="margin:10px 0 0">DM 圖片上傳會在下一階段加入；目前可以把 DM 連結寫在活動描述裡。</p></div>
     <div class="card"><h3>活動場次</h3>
@@ -1624,7 +1692,7 @@ async function renderActivity() {
         : `<div class="tbl"><table><thead><tr><th>#</th><th>場次</th><th>描述</th><th>課程數</th><th>報名人數</th></tr></thead><tbody>
           ${a.batches.map((b, i) => `<tr><td>${i + 1}</td><td><b>${esc(b.batch)}</b></td><td>${esc(b.description || '')}</td><td class="num">${b.courses}</td><td class="num">${b.registrations}</td></tr>`).join('')}
           </tbody></table></div>`}
-      <p class="muted" style="margin:10px 0 0">每堂課的名額在「課程設定」裡設定。</p></div>`;
+      <p class="muted" style="margin:10px 0 0">每堂課的名額在下方課程表設定。</p></div>`;
   $('actEdit').onclick = () => {
     if (!TB.categories) TB.categories = new DataTable(TABLES.categories());
     TB.categories.afterSave = () => renderActivity();
@@ -1798,6 +1866,419 @@ $('statCopy').onclick = () => {
     ...board.meal_counts.map(m => `${md(m.course_date)} 葷食 ${m.meat} 份、素食 ${m.veg} 份`)].join('\n')).join('\n\n');
   navigator.clipboard.writeText(txt).then(() => toast('已複製統計文字'));
 };
+
+/* ===== 共用：把表格掛在頁面上的某個位置（一頁可以同時有活動資料＋課程表） ===== */
+async function mountTable(key, host) {
+  if (!TB[key]) TB[key] = new DataTable(TABLES[key]());
+  const tb = TB[key];
+  Object.values(TB).forEach(t => { if (t !== tb && t.host === host) t.host = null; });
+  tb.host = host; tb.bind();
+  await tb.reload();
+  return tb;
+}
+
+/* ===== 中央視窗 ===== */
+let MODAL_ON = null;
+function openModal(title, body, foot, on, wide) {
+  $('mTitle').textContent = title; $('mBody').innerHTML = body; $('mFoot').innerHTML = foot || '';
+  $('modal').classList.toggle('wide', !!wide);
+  MODAL_ON = on || null; $('modal').hidden = $('mBg').hidden = false;
+  $('mBody').scrollTop = 0;
+}
+function closeModal() { $('modal').hidden = $('mBg').hidden = true; MODAL_ON = null; WZ = null; }
+$('mClose').onclick = closeModal;
+$('mBg').onclick = closeModal;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal').hidden) closeModal(); });
+$('modal').addEventListener('click', e => { if (MODAL_ON) MODAL_ON(e); });
+$('modal').addEventListener('input', e => { if (MODAL_ON && e.target.matches('textarea,input')) MODAL_ON(e); });
+
+// 一步一步確認：每一步按「確認無誤，下一步」，最後一步按完就完成
+let WZ = null;
+function openWizard(title, steps, finish) {
+  WZ = { title, steps, finish, i: 0 };
+  openModal(title, '', '', async e => {
+    const b = e.target.closest?.('[data-wz]'); if (!b || e.type !== 'click' || !WZ) return;
+    if (b.dataset.wz === 'prev') { WZ.i--; return drawWizard(); }
+    const s = WZ.steps[WZ.i];
+    b.disabled = true;
+    try {
+      if (s.check) { const err = await s.check($('mBody')); if (err) { b.disabled = false; return toast(err, true); } }
+      if (WZ.i < WZ.steps.length - 1) { WZ.i++; return drawWizard(); }
+      const fin = WZ.finish; closeModal(); await fin();
+    } catch (err) { b.disabled = false; toast(err.message, true); }
+  });
+  drawWizard();
+}
+function drawWizard() {
+  const n = WZ.steps.length, s = WZ.steps[WZ.i], last = WZ.i === n - 1;
+  $('mBody').innerHTML = `<div class="wzdots">${WZ.steps.map((x, j) => `<span class="${j < WZ.i ? 'done' : j === WZ.i ? 'on' : ''}" title="${esc(x.t)}">${j < WZ.i ? '✓' : j + 1}</span>`).join('')}</div>
+    <h3>${esc(s.t)}</h3>${s.html}`;
+  $('mFoot').innerHTML = `<span class="muted">第 ${WZ.i + 1}／${n} 步</span><span class="spacer"></span>
+    ${WZ.i ? '<button class="btn ghost sm" data-wz="prev">上一步</button>' : ''}
+    <button class="btn sm" data-wz="next">${last ? '確認無誤，完成' : '確認無誤，下一步'}</button>`;
+  $('mBody').scrollTop = 0;
+}
+
+/* ===== 通知範本：{欄位} 會換成每位學生自己的資料 ===== */
+const TPL_DEF = {
+  invite: '{學生姓名}家長您好：\n{活動名稱}開放報名囉！\n{活動描述}\n上課地點：{活動地點}\n報名截止：{報名截止}\n報名連結：{報名連結}\n請於截止前完成報名，謝謝您',
+  attend: '{學生姓名}家長您好：\n{學生姓名}有報名參加{活動名稱}，報名課程有\n{課程名稱} {日期} {時間}\n訂餐狀態：\n{用餐日期} {訂餐狀態} {餐點}\n上課地點：{活動地點}\n請準時到校，謝謝您',
+};
+const TPL_TOKENS = {
+  invite: ['學生姓名', '活動名稱', '活動描述', '活動地點', '報名截止', '報名連結'],
+  attend: ['學生姓名', '活動名稱', '場次', '課程名稱', '日期', '時間', '用餐日期', '訂餐狀態', '餐點', '活動地點'],
+};
+const TPL_HELP = {
+  invite: '',
+  attend: '含有 {課程名稱}、{日期}、{時間} 的那一行，會依這位學生報名的每一堂課各列一行；含有 {用餐日期}、{訂餐狀態}、{餐點} 的那一行，會依每個需要訂餐的日子各列一行。',
+};
+let TPL = { ...TPL_DEF }, NOTI = { invite: {}, attend: {} };
+async function loadTemplates() {
+  const t = await rpc('admin_get_templates', { p_category: S.cat }).catch(() => ({})) || {};
+  TPL = { ...TPL_DEF }; for (const k of Object.keys(TPL_DEF)) if (t[k]) TPL[k] = t[k];
+}
+async function loadNotify(kind) { NOTI[kind] = await rpc('admin_notify_status', { p_category: S.cat, p_kind: kind }).catch(() => ({})) || {}; return NOTI[kind]; }
+const tplSub = (line, v) => line.replace(/\{([^{}]+)\}/g, (m, k) => k in v ? String(v[k] ?? '') : m);
+function fillTpl(t, v, courseRows = [], mealRows = []) {
+  const C = ['{課程名稱}', '{日期}', '{時間}'], M = ['{用餐日期}', '{訂餐狀態}', '{餐點}'], out = [];
+  for (const line of String(t).split('\n')) {
+    if (C.some(x => line.includes(x))) { courseRows.forEach(c => out.push(tplSub(line, { ...v, ...c }))); continue; }
+    if (M.some(x => line.includes(x))) { if (!mealRows.length) out.push('（這次不需要訂餐）'); else mealRows.forEach(m => out.push(tplSub(line, { ...v, ...m }))); continue; }
+    out.push(tplSub(line, v));
+  }
+  return out.map(l => l.replace(/[ \t]+$/, '')).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+const catInfo = () => CATS.find(x => x.category === S.cat) || {};
+const dayText = d => { const x = new Date(d + 'T00:00'); return `${ymd(d)}（${WEEK[x.getDay()]}）`; };
+function inviteMsg(r, t = TPL.invite) {
+  const c = catInfo();
+  return fillTpl(t, { 學生姓名: r.name, 活動名稱: S.cat, 活動描述: c.description || '', 活動地點: c.location || '（另行通知）',
+    報名截止: c.reg_deadline ? ymdhm(c.reg_deadline) : '（額滿為止）', 報名連結: FORM_URL() });
+}
+// 參加通知：這位學生報名的課（依上課時間）＋需要訂餐的日子
+function attendMsg(r, t = TPL.attend) {
+  const mine = (COURSES || []).filter(c => (r.course_ids || []).includes(c.course_id))
+    .sort((a, b) => (a.course_date + a.start_time).localeCompare(b.course_date + b.start_time));
+  const days = [...new Set(mine.map(c => c.course_date))].filter(d => {
+    const cs = mine.filter(c => c.course_date === d);
+    return cs.some(c => hm(c.end_time) <= '12:30') && cs.some(c => hm(c.start_time) >= '12:30' && hm(c.start_time) < '14:00');
+  });
+  const meals = r.meals || {};
+  return fillTpl(t, { 學生姓名: r.name, 活動名稱: S.cat, 場次: r.batch || '', 活動地點: catInfo().location || '（另行通知）' },
+    mine.map(c => ({ 課程名稱: c.name, 日期: dayText(c.course_date), 時間: `${hm(c.start_time)}–${hm(c.end_time)}` })),
+    days.map(d => ({ 用餐日期: dayText(d), 訂餐狀態: ['葷食', '素食'].includes(meals[d]) ? '已訂餐' : '未訂餐', 餐點: ['葷食', '素食'].includes(meals[d]) ? meals[d] : '' })));
+}
+function tplEditor(kind, sample) {
+  return `<div class="tpl">
+    <div class="toks">${TPL_TOKENS[kind].map(k => `<button type="button" data-tok="{${k}}">{${k}}</button>`).join('')}</div>
+    <textarea id="tpl_${kind}" spellcheck="false">${esc(TPL[kind])}</textarea>
+    ${TPL_HELP[kind] ? `<div class="hint">${esc(TPL_HELP[kind])}</div>` : ''}
+    <div class="linkrow" style="margin-top:8px"><button class="btn sm" data-tplsave="${kind}">儲存範本</button>
+      <button class="btn ghost sm" data-tplreset="${kind}">恢復預設範本</button><span class="muted">點上方的 {欄位} 可以插入到游標位置</span></div>
+    <div class="muted" style="margin:12px 0 6px">預覽${sample ? `（以 ${esc(sample.name)} 為例）` : ''}</div>
+    <pre class="msgprev" id="tplprev_${kind}"></pre></div>`;
+}
+function tplPreview(kind, sample) {
+  const el = $('tplprev_' + kind); if (!el) return;
+  const t = $('tpl_' + kind).value;
+  el.textContent = sample ? (kind === 'invite' ? inviteMsg(sample, t) : attendMsg(sample, t)) : '（還沒有可以預覽的學生）';
+}
+// 範本編輯器的共用動作（頁面上或中央視窗裡都可以用）
+async function tplAction(e, sample) {
+  const tok = e.target.closest?.('[data-tok]');
+  const ta = e.target.closest?.('.tpl')?.querySelector('textarea');
+  if (!ta) return false;
+  const kind = ta.id.slice(4);
+  if (e.type === 'input') { tplPreview(kind, sample); return true; }
+  if (tok) {
+    const s = ta.selectionStart ?? ta.value.length, en = ta.selectionEnd ?? s;
+    ta.value = ta.value.slice(0, s) + tok.dataset.tok + ta.value.slice(en);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = s + tok.dataset.tok.length; tplPreview(kind, sample); return true;
+  }
+  if (e.target.closest('[data-tplreset]')) { ta.value = TPL_DEF[kind]; tplPreview(kind, sample); return true; }
+  if (e.target.closest('[data-tplsave]')) {
+    try { await rpc('admin_set_template', { p_category: S.cat, p_kind: kind, p_text: ta.value }); TPL[kind] = ta.value; toast('範本已儲存'); }
+    catch (err) { toast(err.message, true); }
+    return true;
+  }
+  return false;
+}
+async function copyNotice(kind, text, studentId, regId) {
+  await copyText(text);
+  try { await rpc('admin_log_notify', { p_category: S.cat, p_kind: kind, p_student: studentId || null, p_registration: regId || null }); }
+  catch (err) { toast('已複製，但通知紀錄沒有存到：' + err.message, true); return false; }
+  const key = kind === 'attend' ? regId : studentId, o = NOTI[kind][key] || { count: 0 };
+  NOTI[kind][key] = { ...o, count: (o.count || 0) + 1, last_at: new Date().toISOString(), last_by: $('who').textContent };
+  return true;
+}
+const notiText = o => o?.count ? `已複製${o.count > 1 ? ` ${o.count} 次` : ''}` : '未通知';
+
+/* ===== 報名作業：班內生報名狀態（報名啟動） ===== */
+let INV_SAMPLE = null;
+async function renderInvite() {
+  await Promise.all([loadTemplates(), loadNotify('invite')]);
+  $('invView').innerHTML = `<div class="card"><div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">報名通知範本</h3><span class="spacer"></span>
+      <button class="btn ghost sm" id="invToggle">${S.invEdit ? '收起範本' : '編輯範本'}</button></div>
+    <p class="muted" style="margin:6px 0 0">下方名單每位班內生都有一則自己的報名通知。按「複製」貼到 LINE；複製後「通知狀態」會變成「已複製」。透過 LINE 官方帳號直接「發送」會在設定好 LINE 金鑰後開放。</p>
+    <div id="invTpl" ${S.invEdit ? '' : 'hidden'}></div></div>`;
+  const tb = await mountTable('target', $('invHost'));
+  INV_SAMPLE = tb.rows[0] || null;
+  if (S.invEdit) { $('invTpl').innerHTML = tplEditor('invite', INV_SAMPLE); tplPreview('invite', INV_SAMPLE); }
+}
+$('invView').addEventListener('click', async e => {
+  if (e.target.closest('#invToggle')) { S.invEdit = !S.invEdit; return renderInvite(); }
+  if (await tplAction(e, INV_SAMPLE) && e.target.closest('[data-tplsave]')) TB.target?.render();
+});
+$('invView').addEventListener('input', e => tplAction(e, INV_SAMPLE));
+$('invHost').addEventListener('click', async e => {
+  const b = e.target.closest('[data-icopy]'); if (!b) return;
+  const r = TB.target.rows.find(x => x.student_id === b.dataset.icopy); if (!r) return;
+  try { if (await copyNotice('invite', inviteMsg(r), r.student_id, r.registration_id)) { toast(`已複製 ${r.name} 的報名通知`); TB.target.render(); } }
+  catch (err) { toast(err.message, true); }
+});
+
+/* ===== 活動準備：活動前檢查清單 ===== */
+let CK = null;
+const CK_BLOCKS = {
+  confirm_roster: { t: '名單確認', d: '一科一科確認名單與報名人數，全部確認後顯示「已確認無誤」。' },
+  confirm_seats: { t: '座位與教室確認', d: '一科一科確認教室與座位，沒有學生漏排座位。' },
+  confirm_meal: { t: '餐點確認', d: '一天一天確認訂餐人數，並確認已通知相關部門訂餐數量。' },
+};
+async function renderChecklist() {
+  const c = catInfo(), bs = c.batches || [];
+  const [boards, courses, ck, regs] = await Promise.all([
+    Promise.all(bs.map(async b => ({ batch: b, board: await rpc('admin_board', { p_category: S.cat, p_batch: b }) }))),
+    coursesOf(S.cat, true),
+    rpc('admin_checklist', { p_category: S.cat }).catch(() => ({})),
+    rpc('admin_list', { p_key: 'registrations', p_category: S.cat, p_batch: null }),
+    loadTemplates(), loadNotify('attend')]);
+  CK = { boards, courses, ck: ck || {}, regs: (regs || []).filter(r => r.status === '報名中').sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant')), implicit: c.implicit };
+  const items = boards.flatMap(b => b.board.courses.map(x => ({ b, x })));
+  const ppl = (b, id) => b.board.roster.filter(r => r.course_id === id && r.status === '報名中');
+  const unseated = items.reduce((s, { b, x }) => s + ppl(b, x.course_id).filter(r => !r.seat_id).length, 0);
+  const days = boards.flatMap(b => b.board.meal_counts.map(m => ({ batch: b.batch, ...m }))).sort((a, b) => a.course_date.localeCompare(b.course_date));
+  const notified = CK.regs.filter(r => NOTI.attend[r.registration_id]?.count).length;
+  const blk = (k, extra) => {
+    const s = CK.ck[k], ok = !!s?.confirmed, reset = s && !s.confirmed && s.note;
+    return `<div class="ckb ${ok ? 'ok' : ''}"><div class="ckh"><h3>${CK_BLOCKS[k].t}</h3>
+        <span class="chip ${ok ? 'c-ok' : 'c-out'}">${ok ? '✓ 已確認無誤' : '待確認'}</span></div>
+      <p class="muted">${CK_BLOCKS[k].d}</p>
+      ${reset ? `<div class="warn">${esc(s.note)}</div>` : ''}
+      ${extra}
+      ${ok ? `<div class="muted" style="font-size:13px">${esc(confirmedText(s))}</div>` : ''}
+      <div class="ckf"><button class="btn sm${ok ? ' ghost' : ''}" data-wiz="${k}">${ok ? '重新確認' : '開始確認'}</button>
+        ${ok ? `<button class="btn ghost sm" data-unck="${k}">改回待確認</button>` : ''}</div></div>`;
+  };
+  const anyOk = CK_STEPS.some(k => CK.ck[k]?.confirmed);
+  $('ckView').innerHTML = `
+    ${anyOk ? '<div class="okline" style="margin:0 0 12px">確認後，若在「報名作業」修改報名、退選、餐點或座位，系統會先提醒；確定修改後，名單、座位、餐點確認會回到「待確認」。</div>' : ''}
+    <div class="ckgrid">
+      ${blk('confirm_roster', `<div class="ckstat">${items.length} 堂課・${CK.regs.length} 人報名</div>`)}
+      ${blk('confirm_seats', `<div class="ckstat">${unseated ? `<span style="color:var(--rose-ink)">還有 ${unseated} 科次沒有座位</span>` : items.length ? '每一科都排好座位了' : '還沒有課程'}</div>`)}
+      ${blk('confirm_meal', `<div class="ckstat">${days.map(m => `${md(m.course_date)} 葷 ${m.meat}・素 ${m.veg}`).join('<br>') || '沒有需要訂餐的日子'}</div>`)}
+      <div class="ckb ${CK.regs.length && notified >= CK.regs.length ? 'ok' : ''}"><div class="ckh"><h3>參加通知</h3>
+          <span class="chip ${CK.regs.length && notified >= CK.regs.length ? 'c-ok' : 'c-out'}">已通知 ${notified}／${CK.regs.length}</span></div>
+        <p class="muted">設定通知範本，系統會為每位報名者產生一則專屬的參加通知，按「複製」貼到 LINE。報名總覽的「通知狀態」會顯示「已複製」。</p>
+        <div class="ckf"><button class="btn sm" data-msgs>產生通知訊息</button><button class="btn ghost sm" data-attpl>編輯通知範本</button></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>輸出表單</h3>
+      <p class="muted" style="margin:0 0 10px">PDF 會開新視窗並跳出列印，選「另存為 PDF」即可存檔。</p>
+      <div class="exp">
+        <b style="min-width:90px">點名表</b><button class="btn ghost sm" data-exp="roll_pdf">PDF</button><button class="btn ghost sm" data-exp="roll_csv">CSV</button>
+      </div>
+      <div class="exp"><b style="min-width:90px">訂餐登記表</b><button class="btn ghost sm" data-exp="meal_pdf">PDF</button><button class="btn ghost sm" data-exp="meal_csv">CSV</button></div>
+      <div class="exp"><b style="min-width:90px">各科座位表</b><button class="btn ghost sm" data-exp="seat_pdf">PDF</button><button class="btn ghost sm" data-exp="seat_csv">CSV</button></div>
+    </div>`;
+}
+const ckTitle = (b, x) => `${CK.implicit || CK.boards.length < 2 ? '' : b.batch + '・'}${x.course_name}`;
+const ckCourses = () => CK.boards.flatMap(b => { return b.board.courses.slice().sort((p, q) => subjRank(p.course_name) - subjRank(q.course_name) || (p.course_date + p.start_time).localeCompare(q.course_date + q.start_time)).map(x => ({ b, x })); });
+const subjRank = n => { const i = SUBJ_ORDER.indexOf(n); return i < 0 ? 99 : i; };
+const ckPeople = (b, id) => b.board.roster.filter(r => r.course_id === id && r.status === '報名中').sort((p, q) => p.name.localeCompare(q.name, 'zh-Hant'));
+const ckCourse = id => CK.courses.find(c => c.course_id === id) || {};
+async function finishCk(k) {
+  await rpc('admin_confirm_step', { p_category: S.cat, p_step: k, p_on: true });
+  toast(`${CK_BLOCKS[k].t}：已確認無誤`); await loadFlow(); await renderChecklist();
+}
+function wizRoster() {
+  const list = ckCourses();
+  if (!list.length) return toast('還沒有課程可以確認', true);
+  openWizard('名單確認', list.map(({ b, x }) => {
+    const m = ckCourse(x.course_id), ppl = ckPeople(b, x.course_id), cap = m.capacity;
+    return { t: `確認${ckTitle(b, x)}名單與報名人數`, html: `
+      <dl class="kv"><dt>上課時間</dt><dd>${dayText(x.course_date)} ${hm(x.start_time)}–${hm(x.end_time)}</dd>
+        <dt>教室</dt><dd>${esc(m.classroom || '—')}</dd><dt>授課老師</dt><dd>${esc(m.teacher || '—')}</dd>
+        <dt>報名人數</dt><dd><b style="font-size:18px">${ppl.length}</b> 人${cap != null ? `（名額 ${cap}）` : ''}</dd></dl>
+      ${!m.teacher ? '<div class="warn">這堂課還沒指定授課老師</div>' : ''}
+      ${cap != null && ppl.length > cap ? `<div class="warn">報名人數超過名額 ${ppl.length - cap} 人</div>` : ''}
+      <div class="nmlist">${ppl.map((p, i) => `<span>${i + 1}. ${esc(p.name)}${p.affiliation === '班外生' ? '<small>（班外）</small>' : ''}</span>`).join('') || '<span class="muted">沒有人報名</span>'}</div>` };
+  }), () => finishCk('confirm_roster'));
+}
+function wizSeats() {
+  const list = ckCourses();
+  if (!list.length) return toast('還沒有課程可以確認', true);
+  openWizard('座位與教室確認', list.map(({ b, x }) => {
+    const m = ckCourse(x.course_id), ppl = ckPeople(b, x.course_id), un = ppl.filter(p => !p.seat_id);
+    return { t: `確認${ckTitle(b, x)}的教室與座位`, html: `
+      <dl class="kv"><dt>上課時間</dt><dd>${dayText(x.course_date)} ${hm(x.start_time)}–${hm(x.end_time)}</dd>
+        <dt>教室</dt><dd><b>${esc(m.classroom || '還沒選教室')}</b></dd>
+        <dt>已排座位</dt><dd>${ppl.length - un.length}／${ppl.length} 人</dd></dl>
+      ${!m.classroom ? '<div class="warn">這堂課還沒選教室，請到「活動與課程設定」設定</div>' : ''}
+      ${un.length ? `<div class="warn">還沒有座位：${esc(un.map(p => p.name).join('、'))}</div><a class="btn ghost sm" href="${wsHref('seats')}" style="text-decoration:none">到座位配置排座 →</a>`
+        : ppl.length ? '<div class="okline">這一科每位學生都有座位</div>' : ''}`,
+      check: () => !m.classroom ? '這堂課還沒選教室' : un.length ? `還有 ${un.length} 位學生沒有座位，請先到座位配置排好` : null };
+  }), () => finishCk('confirm_seats'));
+}
+function wizMeal() {
+  const plan = FLOW?.meal_plan || {};
+  const days = CK.boards.flatMap(b => b.board.meal_counts.map(m => ({ b, m }))).sort((p, q) => p.m.course_date.localeCompare(q.m.course_date));
+  const steps = days.map(({ b, m }) => {
+    const p = plan[m.course_date] || {};
+    return { t: `確認 ${dayText(m.course_date)} 訂餐`, html: `
+      <div class="tbl"><table><thead><tr><th>葷食</th><th>素食</th><th>合計</th></tr></thead>
+        <tbody><tr><td class="num"><b>${m.meat}</b></td><td class="num"><b>${m.veg}</b></td><td class="num"><b>${m.total}</b></td></tr></tbody></table></div>
+      <div class="formset" style="margin-top:12px">
+        <div class="fld"><label class="l">訂餐店家／負責部門</label><input class="in" data-k="vendor" value="${esc(p.vendor || '')}"></div>
+        <div class="fld"><label class="l">送達時間</label><input class="in" type="time" data-k="time" value="${esc(p.time || '')}"></div>
+        <div class="fld" style="grid-column:1/-1"><label class="l">備註</label><input class="in" data-k="note" value="${esc(p.note || '')}"></div></div>
+      <label class="s3d-opt" style="margin-top:10px"><input type="checkbox" data-k="notified" ${p.notified ? 'checked' : ''}> 已通知相關部門訂餐數量（葷食 ${m.meat} 份、素食 ${m.veg} 份）</label>`,
+      check: async body => {
+        const v = { meat: m.meat, veg: m.veg }; body.querySelectorAll('[data-k]').forEach(i => v[i.dataset.k] = i.type === 'checkbox' ? i.checked : i.value);
+        if (!v.notified) return '請先通知相關部門訂餐數量，再勾選確認';
+        await rpc('admin_set_meal_plan', { p_category: S.cat, p_date: m.course_date, p: v });
+        FLOW.meal_plan = { ...(FLOW.meal_plan || {}), [m.course_date]: v };
+        return null;
+      } };
+  });
+  if (!steps.length) steps.push({ t: '沒有需要訂餐的日子', html: '<p class="muted">這個活動沒有同一天上午、下午都有課的學生，不需要訂餐。</p>' });
+  openWizard('餐點確認', steps, () => finishCk('confirm_meal'));
+}
+function attendTplModal() {
+  const sample = CK.regs[0] || null;
+  openModal('參加通知範本', tplEditor('attend', sample), '<span class="spacer"></span><button class="btn ghost sm" data-close>關閉</button>', async e => {
+    if (e.target.closest?.('[data-close]')) return closeModal();
+    await tplAction(e, sample);
+  });
+  tplPreview('attend', sample);
+}
+function attendMsgsModal() {
+  const draw = () => {
+    const xs = CK.regs.filter(r => !S.msgOnlyNew || !NOTI.attend[r.registration_id]?.count);
+    $('mBody').innerHTML = `<div class="tools" style="margin-bottom:10px"><label class="muted"><input type="checkbox" data-only ${S.msgOnlyNew ? 'checked' : ''}> 只看未通知</label>
+        <span class="spacer"></span><span class="muted">共 ${CK.regs.length} 位報名者</span></div>
+      <div class="msgs">${xs.map(r => { const o = NOTI.attend[r.registration_id];
+        return `<div class="msg"><div class="h"><b>${esc(r.name)}</b>${CK.implicit ? '' : `<span class="chip">${esc(r.batch)}</span>`}
+          <span class="chip ${o?.count ? 'c-ok' : 'c-grey'}">${notiText(o)}</span><span class="spacer"></span>
+          <button class="btn ghost sm" disabled title="設定好 LINE 官方帳號金鑰後開放">發送</button>
+          <button class="btn sm" data-acopy="${r.registration_id}">複製</button></div>
+          <pre class="msgprev">${esc(attendMsg(r))}</pre></div>`; }).join('') || '<p class="muted">沒有需要通知的報名者</p>'}</div>`;
+  };
+  openModal('參加通知訊息', '', '<span class="muted">複製後貼到 LINE 傳給家長</span><span class="spacer"></span><button class="btn ghost sm" data-close>關閉</button>', async e => {
+    if (e.type !== 'click') return;
+    if (e.target.closest?.('[data-close]')) { closeModal(); return renderChecklist(); }
+    if (e.target.closest?.('[data-only]')) { S.msgOnlyNew = e.target.checked; return draw(); }
+    const b = e.target.closest?.('[data-acopy]'); if (!b) return;
+    const r = CK.regs.find(x => x.registration_id === b.dataset.acopy);
+    try { if (await copyNotice('attend', attendMsg(r), r.student_id, r.registration_id)) { toast(`已複製 ${r.name} 的參加通知`); const y = $('mBody').scrollTop; draw(); $('mBody').scrollTop = y; } }
+    catch (err) { toast(err.message, true); }
+  }, true);
+  draw();
+}
+$('ckView').addEventListener('click', async e => {
+  const w = e.target.closest('[data-wiz]'), u = e.target.closest('[data-unck]'), x = e.target.closest('[data-exp]');
+  if (w) return ({ confirm_roster: wizRoster, confirm_seats: wizSeats, confirm_meal: wizMeal })[w.dataset.wiz]();
+  if (u) {
+    if (!confirm(`要把「${CK_BLOCKS[u.dataset.unck].t}」改回待確認嗎？`)) return;
+    try { await rpc('admin_confirm_step', { p_category: S.cat, p_step: u.dataset.unck, p_on: false }); await loadFlow(); await renderChecklist(); } catch (err) { toast(err.message, true); }
+    return;
+  }
+  if (e.target.closest('[data-msgs]')) return attendMsgsModal();
+  if (e.target.closest('[data-attpl]')) return attendTplModal();
+  if (x) exportCk(x.dataset.exp).catch(err => toast(err.message, true));
+});
+
+/* ===== 輸出：點名表、訂餐登記表、各科座位表（PDF＝列印視窗，CSV＝下載） ===== */
+function downloadCsv(name, head, lines) {
+  const csv = '﻿' + [head, ...lines].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = name; a.click();
+}
+const PRINT_CSS = `body{font-family:"Noto Sans TC",sans-serif;margin:24px;color:#222}section{page-break-after:always}section:last-child{page-break-after:auto}
+  h1{font-size:18px;margin:0 0 12px}h2{font-size:15px;margin:0 0 8px}table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid #999;padding:6px 8px;font-size:13px;text-align:left}th{background:#eee}
+  .grid{display:grid;gap:4px;margin-top:8px}.cell{border:1px solid #888;border-radius:4px;min-height:38px;font-size:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:2px}
+  .cell.aisle{border:none}.cell.blk{background:#666;color:#fff}.cell.door{border-style:dashed;color:#666}.front{text-align:center;border:1px solid #888;padding:4px;margin-top:8px;font-size:12px}
+  .strips{display:grid;grid-template-columns:repeat(3,1fr);gap:0}.strip{border:1px dashed #999;padding:14px 10px;text-align:center}.strip b{font-size:20px;display:block}.strip span{font-size:12px;color:#555}`;
+function printWin(title) { const w = window.open('', '_blank'); if (!w) throw new Error('瀏覽器擋住了新視窗，請允許這個網站開啟彈出視窗'); w.document.write('<p style="font-family:sans-serif">準備中…</p>'); return w; }
+function printTo(w, title, body) {
+  w.document.open();
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS}</style><h1>${esc(title)}</h1>${body}<script>setTimeout(()=>print(),300)<\/script>`);
+  w.document.close();
+}
+async function exportCk(kind) {
+  const list = ckCourses(), cat = S.cat;
+  if (kind === 'roll_pdf') {
+    const w = printWin();
+    printTo(w, `${cat} 點名表`, list.map(({ b, x }) => { const ppl = ckPeople(b, x.course_id), m = ckCourse(x.course_id);
+      return `<section><h2>${esc(ckTitle(b, x))}　${dayText(x.course_date)} ${hm(x.start_time)}–${hm(x.end_time)}　${esc(m.classroom || '')}　共 ${ppl.length} 人</h2>
+        <table><thead><tr><th>#</th><th>姓名</th><th>班別</th><th>學校</th><th>座位</th><th>出席</th><th>遲到</th><th>缺席</th><th>備註</th></tr></thead><tbody>
+        ${ppl.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${r.affiliation === '班外生' ? '班外' : '班內'}</td><td>${esc(r.school || '')}</td><td>${r.seat_row ? `${r.seat_row}排${r.seat_col}列` : ''}</td><td></td><td></td><td></td><td></td></tr>`).join('')}
+        </tbody></table></section>`; }).join(''));
+  } else if (kind === 'roll_csv') {
+    downloadCsv(`點名表_${cat}.csv`, ['場次', '課程', '日期', '時間', '教室', '序號', '姓名', '班別', '學校', '家長電話', '座位', '出席'],
+      list.flatMap(({ b, x }) => ckPeople(b, x.course_id).map((r, i) => [b.batch, x.course_name, ymd(x.course_date), `${hm(x.start_time)}-${hm(x.end_time)}`, ckCourse(x.course_id).classroom || '', i + 1, r.name, r.affiliation, r.school, r.parent_phone, r.seat_row ? `${r.seat_row}排${r.seat_col}列` : '', ''])));
+  } else if (kind === 'meal_pdf' || kind === 'meal_csv') {
+    const days = CK.boards.flatMap(b => [...new Set(b.board.meal_counts.map(m => m.course_date))].map(d => ({ b, d,
+      rows: b.board.meal_list.filter(r => r.course_date === d && r.meal !== '不訂餐').sort((p, q) => p.name.localeCompare(q.name, 'zh-Hant')) }))).sort((p, q) => p.d.localeCompare(q.d));
+    if (!days.length) return toast('這個活動沒有需要訂餐的日子', true);
+    if (kind === 'meal_csv') return downloadCsv(`訂餐登記表_${cat}.csv`, ['日期', '序號', '姓名', '班別', '學校', '餐點', '取餐簽名'],
+      days.flatMap(({ d, rows }) => rows.map((r, i) => [ymd(d), i + 1, r.name, r.affiliation, r.school, r.meal, ''])));
+    const w = printWin();
+    printTo(w, `${cat} 訂餐登記表`, days.map(({ d, rows }) => { const n = k => rows.filter(r => r.meal === k).length;
+      return `<section><h2>${dayText(d)}　葷食 ${n('葷食')} 份・素食 ${n('素食')} 份・共 ${rows.length} 份</h2>
+        <table><thead><tr><th>#</th><th>姓名</th><th>學校</th><th>餐點</th><th style="width:30%">取餐簽名</th></tr></thead><tbody>
+        ${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.school || '')}</td><td>${esc(r.meal)}</td><td></td></tr>`).join('')}</tbody></table></section>`; }).join(''));
+  } else if (kind === 'seat_csv') {
+    downloadCsv(`座位表_${cat}.csv`, ['場次', '課程', '日期', '教室', '姓名', '排', '列'],
+      list.flatMap(({ b, x }) => ckPeople(b, x.course_id).map(r => [b.batch, x.course_name, ymd(x.course_date), ckCourse(x.course_id).classroom || '', r.name, r.seat_row || '', r.seat_col || ''])));
+  } else if (kind === 'seat_pdf') {
+    const w = printWin();
+    const maps = await Promise.all(list.map(({ x }) => rpc('admin_seatmap', { p_course: x.course_id }).catch(() => null)));
+    printTo(w, `${cat} 各科座位表`, list.map(({ b, x }, i) => {
+      const sm = maps[i]; if (!sm?.layout) return `<section><h2>${esc(ckTitle(b, x))}</h2><p>這堂課還沒有教室座位配置</p></section>`;
+      const L = sm.layout, aisles = (L.aisles || []).map(Number);
+      let h = '';
+      for (let r = 1; r <= L.rows; r++) for (let c = 1; c <= L.cols; c++) {
+        if (aisles.includes(c)) { h += '<div class="cell aisle"></div>'; continue; }
+        if (L.door_row && r === L.door_row && c === L.door_col) { h += `<div class="cell door">${esc(L.door || '門')}</div>`; continue; }
+        const p = sm.people.find(q => q.row === r && q.col === c && q.status === '報名中');
+        h += `<div class="cell${isBlocked(L, r, c) ? ' blk' : ''}">${p ? esc(p.name) : ''}</div>`;
+      }
+      return `<section><h2>${esc(ckTitle(b, x))}　${dayText(x.course_date)} ${hm(x.start_time)}–${hm(x.end_time)}　${esc(L.classroom || '')}</h2>
+        <div class="front">講台</div><div class="grid" style="grid-template-columns:${Array.from({ length: L.cols }, (_, j) => aisles.includes(j + 1) ? '14px' : '1fr').join(' ')}">${h}</div></section>`;
+    }).join(''));
+  }
+}
+// 報名統計：列印目前分頁的名條（一人一條，可剪下）
+$('printStrips').onclick = () => {
+  let title, ppl;
+  if (S.course === 'meal') { title = `${S.cat} ${md(S.mealDay || '')} 訂餐名條`; ppl = mealRowsOf(S.mealDay).map(r => ({ name: r.name, sub: `${md(S.mealDay)} ${r.meal}` })); }
+  else { const c = BOARD.courses.find(x => x.course_id === S.course); if (!c) return; title = `${S.cat} ${c.course_name}名條`;
+    ppl = currentRows().filter(r => r.status === '報名中').map(r => ({ name: r.name, sub: `${c.course_name}・${md(c.course_date)} ${hm(c.start_time)}${r.school ? '・' + r.school : ''}` })); }
+  try { printTo(printWin(), title, `<div class="strips">${ppl.map(p => `<div class="strip"><b>${esc(p.name)}</b><span>${esc(p.sub)}</span></div>`).join('')}</div>`); }
+  catch (err) { toast(err.message, true); }
+};
+// 報名統計最上方的 dashboard：報名總數、各科已報名／未報名、每天葷素
+function renderStatsDash() {
+  const total = new Set(BOARD.roster.filter(r => r.status === '報名中').map(r => r.registration_id)).size;
+  const cs = orderedCourses(), meals = BOARD.meal_counts.slice().sort((a, b) => a.course_date.localeCompare(b.course_date));
+  $('statsDash').innerHTML = `<div class="dash">
+    <div class="card"><h3>報名總數</h3><div class="big">${total}</div><div class="muted">填寫報名表的總人數${catInfo().implicit ? '' : `（${esc(S.batch)}）`}</div></div>
+    <div class="card"><h3>各科報名人數</h3><div class="tbl"><table><thead><tr><th>科目</th><th>已報名</th><th>未報名</th><th>合計</th></tr></thead><tbody>
+      ${cs.map(c => `<tr><td><b>${esc(c.course_name)}</b> <span class="muted">${md(c.course_date)}</span></td><td class="num">${c.enrolled}</td><td class="num">${total - c.enrolled}</td><td class="num">${total}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">還沒有課程</td></tr>'}
+      </tbody></table></div></div>
+    <div class="card"><h3>訂餐統計</h3><div class="tbl"><table><thead><tr><th>日期</th><th>葷食</th><th>素食</th><th>合計</th></tr></thead><tbody>
+      ${meals.map(m => `<tr><td>${md(m.course_date)}</td><td class="num">${m.meat}</td><td class="num">${m.veg}</td><td class="num"><b>${m.total}</b></td></tr>`).join('') || '<tr><td colspan="4" class="muted">沒有需要訂餐的日子</td></tr>'}
+      </tbody></table></div></div></div>`;
+}
 
 /* ===== 通用表格：排序、篩選、欄位顯示／順序、分頁、CSV、批次動作；版面存在資料庫 ===== */
 let PREFS = {}, LOOK = null, COURSES = null;
@@ -2415,8 +2896,19 @@ const TABLES = {
       const r = await rpc('admin_target_roster', { p_category: S.cat });
       return r.students.map(x => ({ ...x, status: x.registration_id ? '已報名' : '未報名' }));
     },
-    note: '自動列出這個活動學年的國三在學學生（依學生名單的入學年）。手動加入／移除、通知範本與 LINE 發送會在下一階段加入。',
+    note: '自動列出這個活動學年的國三在學學生（依學生名單的入學年）。手動加入／移除名單會在下一階段加入。',
     sort: { k: 'status', d: -1 },
+    bulk: [
+      { label: '複製選取的報名通知', run: async (rows, tb) => {
+          if (!rows.length) return;
+          try {
+            await copyText(rows.map(r => inviteMsg(r)).join('\n\n——————\n\n'));
+            for (const r of rows) await rpc('admin_log_notify', { p_category: S.cat, p_kind: 'invite', p_student: r.student_id, p_registration: r.registration_id || null });
+            toast(`已複製 ${rows.length} 則報名通知`);
+          } catch (e) { toast(e.message, true); }
+          await loadNotify('invite'); tb.sel.clear(); tb.render();
+        } },
+    ],
     empty: '學生名單裡沒有這個學年的國三學生',
     cols: [
       { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
@@ -2424,6 +2916,9 @@ const TABLES = {
       { k: 'parent_phone', t: '家長手機' },
       { k: 'status', t: '報名狀態', type: 'chip', chips: { '已報名': 'c-ok', '未報名': 'c-out' } },
       { k: 'batch', t: '報名場次', type: 'chip' },
+      { k: 'notify', t: '通知狀態', type: 'chip', chips: { '未通知': 'c-grey' }, get: r => notiText(NOTI.invite[r.student_id]),
+        html: r => { const o = NOTI.invite[r.student_id]; return `<span class="chip ${o?.count ? 'c-ok' : 'c-grey'}" title="${o?.count ? esc(`${o.last_by || ''} ${ymdhm(o.last_at)}`) : ''}">${esc(notiText(o))}</span>`; } },
+      { k: 'msg', t: '報名通知', get: () => '', html: r => `<button class="btn sm" data-icopy="${r.student_id}">複製</button> <button class="btn ghost sm" disabled title="設定好 LINE 官方帳號金鑰後開放">發送</button>` },
     ],
   }),
   unreg: () => ({ ...TABLES.target(), key: 'unreg', title: '尚未報名', locked: { status: '未報名' } }),
@@ -2437,6 +2932,7 @@ const TABLES = {
       const [rows, helpers] = await Promise.all([
         rpc('admin_list', { p_key: 'registrations', p_category: S.cat, p_batch: S.tbatch || null }),
         rpc('admin_registration_meta', { p_category: S.cat }).catch(() => ({})),
+        loadNotify('attend'),
       ]);
       await coursesOf(S.cat);
       const days = b => [...new Set(COURSES.filter(c => c.batch === b).map(c => c.course_date))].sort();
@@ -2447,6 +2943,7 @@ const TABLES = {
         r.last_by = m.last_name ? `${m.last_name}老師` : (m.last_email || '');
         r.last_at = m.last_at || r.updated_at;
         r._days = days(r.batch);
+        r.notify = notiText(NOTI.attend[r.registration_id]);
       });
       return rows;
     },
@@ -2458,6 +2955,7 @@ const TABLES = {
       { k: 'status', t: '狀態', type: 'chip', chips: CH.status },
       { k: 'batch', t: '場次', type: 'chip' },
       { k: 'name', t: '學生姓名', html: r => `<b>${esc(r.name)}</b>` },
+      { k: 'notify', t: '通知狀態', html: r => `<span class="chip ${r.notify === '未通知' ? 'c-grey' : 'c-ok'}" title="參加通知（在「活動前檢查清單」複製）">${esc(r.notify || '')}</span>` },
       { k: 'affiliation', t: '班別', type: 'chip', chips: CH.aff },
       { k: 'school', t: '學校' },
       { k: 'parent_phone', t: '家長手機' },
@@ -2540,7 +3038,7 @@ const TABLES = {
         ? { label: '取消報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '已取消' }).then(() => '已取消報名') }
         : { label: '恢復報名', run: r => rpc('admin_set_registration_status', { p_reg: r.registration_id, p_status: '報名中' }).then(() => '已恢復報名，請確認科目') },
       row.reminder ? { label: '複製提醒訊息', close: false, run: r => copyText(r.reminder, '已複製提醒訊息') } : null,
-      { label: '修改紀錄', close: false, run: r => { S.jump = r.name; S.sub.roster = 'logs'; location.hash = wsHref('roster'); } },
+      { label: '修改紀錄', close: false, run: r => { S.jump = r.name; S.sub.regs = 'logs'; location.hash = wsHref('regs'); } },
     ],
   }),
 
@@ -2742,9 +3240,9 @@ const TABLES = {
       }
       LOOK = null; COURSES = null; await loadBootstrap();
       // 新活動：直接進入它的工作空間；改名：留在同一步
-      if (isNew) setTimeout(() => location.hash = wsHref('activity', cat), 0);
-      else if (row.category !== cat) { delete FLOWS[row.category]; setTimeout(() => location.hash = wsHref(S.step || 'activity', cat), 0); }
-      else if (S.view === 'activity') { await loadFlow(); renderActivity(); }
+      if (isNew) setTimeout(() => location.hash = wsHref('act_course', cat), 0);
+      else if (row.category !== cat) { delete FLOWS[row.category]; setTimeout(() => location.hash = wsHref(S.step || 'act_course', cat), 0); }
+      else if (S.view === 'activity') { await loadFlow(); await renderActivity(); TB.courses?.reload(); }
       else if (S.view === 'home') renderHome();
     },
     onDelete: async r => { await rpc('admin_remove', { p_key: 'categories', p_id: r.category }); LOOK = null; S.cat = null; await loadBootstrap(); location.hash = '#home'; },
